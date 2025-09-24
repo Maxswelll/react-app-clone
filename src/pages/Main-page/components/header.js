@@ -1,4 +1,4 @@
-import { Navbar, Container, Button } from "react-bootstrap";
+import { Navbar, Container } from "react-bootstrap";
 export default function Header() {
   return (
     <Navbar bg="light" className="shadow-sm mb-4 ">
@@ -20,7 +20,6 @@ export default function Header() {
             <small className="ms-auto text-muted">Premium Baby Clothes</small>
           </div>
         </div>
-        <Button variant="outline-danger">Logout</Button>
       </Container>
     </Navbar>
   );

@@ -1,4 +1,3 @@
-// pages/index.js or any component
 import { useEffect } from "react";
 import { Container, Button, Card, Form } from "react-bootstrap";
 
