@@ -13,6 +13,7 @@ export default function Header() {
               height: "48px",
               objectFit: "cover",
               border: "2px solid #ddd",
+              padding: "5px",
             }}
           ></img>
           <div className="col">
