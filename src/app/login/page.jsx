@@ -4,22 +4,23 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import { VscAccount } from "react-icons/vsc";
 import { CiLock } from "react-icons/ci";
 
+
 export default function LoginPage() {
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
-  const [alert, setAlert] = useState(null); // 🔹 for showing alerts
+  const [alert, setAlert] = useState(null); //  for showing alerts
 
   const handleLogin = (e) => {
     e.preventDefault();
 
     if (userId === "Admin" && password === "12345") {
-      // ✅ Successful login
+      //  Successful login
       setAlert({ type: "success", message: "Login successful!" });
       setTimeout(() => {
         window.location.href = "/Main-page"; // redirect after success
       }, 1500);
     } else {
-      // ❌ Failed login
+      //  Failed login
       setAlert({ type: "danger", message: "Invalid User ID or Password!" });
     }
   };
@@ -61,7 +62,7 @@ export default function LoginPage() {
           <p className="text-muted">Sign in to your account</p>
         </div>
 
-        {/* 🔹 Alert Message */}
+        {/*  Alert Message */}
         {alert && (
           <div className={`alert alert-${alert.type} text-center`} role="alert">
             {alert.message}
