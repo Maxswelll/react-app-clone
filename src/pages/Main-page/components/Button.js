@@ -6,7 +6,7 @@ export default function Log() {
 
   const handleLogout = () => {
     // Redirect with query param
-    router.push("/login?logout==success");
+    router.push("/login?logout=success");
   };
 
   return (

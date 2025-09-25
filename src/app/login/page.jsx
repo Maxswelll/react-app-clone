@@ -1,27 +1,39 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { VscAccount } from "react-icons/vsc";
 import { CiLock } from "react-icons/ci";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { FiEye } from "react-icons/fi";
+import { FiEyeOff } from "react-icons/fi";
 
 
 export default function LoginPage() {
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
-  const [alert, setAlert] = useState(null); //  for showing alerts
+  const[showPassword,setShowPassword]=useState(false);
+
+  //  Show toast when redirected from logout
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("logout") ==="success") {
+        toast.success("Logged out successfully!", { position: "top-center" });
+      }
+    }
+  }, []);
 
   const handleLogin = (e) => {
     e.preventDefault();
 
     if (userId === "Admin" && password === "12345") {
-      //  Successful login
-      setAlert({ type: "success", message: "Login successful!" });
+      toast.success("Login successful!", { position: "top-center" });
       setTimeout(() => {
-        window.location.href = "/Main-page"; // redirect after success
+        window.location.href = "/Main-page";
       }, 1500);
     } else {
-      //  Failed login
-      setAlert({ type: "danger", message: "Invalid User ID or Password!" });
+      toast.error("Invalid User ID or Password!", { position: "top-center" });
     }
   };
 
@@ -30,15 +42,9 @@ export default function LoginPage() {
       className="d-flex justify-content-center align-items-center vh-100"
       style={{
         background: "linear-gradient(135deg, #667eea, #764ba2)",
-        position: "relative",
-        overflow: "hidden",
       }}
     >
-      {/* Card */}
-      <div
-        className="card shadow-lg p-4"
-        style={{ width: "400px", borderRadius: "20px", zIndex: 10 }}
-      >
+      <div className="card shadow-lg p-4" style={{ width: "400px", borderRadius: "20px" }}>
         {/* Logo */}
         <div className="text-center mb-4">
           <img
@@ -52,8 +58,6 @@ export default function LoginPage() {
               background: "linear-gradient(135deg, #667eea, #764ba2)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-              color: "transparent",
             }}
             className="mt-3 fw-bold"
           >
@@ -62,16 +66,8 @@ export default function LoginPage() {
           <p className="text-muted">Sign in to your account</p>
         </div>
 
-        {/*  Alert Message */}
-        {alert && (
-          <div className={`alert alert-${alert.type} text-center`} role="alert">
-            {alert.message}
-          </div>
-        )}
-
         {/* Form */}
         <form onSubmit={handleLogin}>
-          {/* User ID */}
           <div className="mb-3">
             <label htmlFor="userId" className="text-danger">
               * <span className="form-label fw-semibold text-dark">User ID</span>
@@ -92,7 +88,6 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Password */}
           <div className="mb-3">
             <label htmlFor="password" className="text-danger">
               * <span className="form-label fw-semibold text-dark">Password</span>
@@ -102,7 +97,7 @@ export default function LoginPage() {
                 <CiLock />
               </span>
               <input
-                type="password"
+                type={showPassword ? "text":"password"}
                 id="password"
                 className="form-control"
                 placeholder="Enter your password"
@@ -110,10 +105,16 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+              <span 
+              className="input-group-text bg-light" 
+                style={{cursor: "poniter"}}
+                onClick={() =>setShowPassword(!showPassword)}
+                >
+                  {showPassword? <FiEye/>:<FiEyeOff />}
+              </span>
             </div>
           </div>
 
-          {/* Remember me */}
           <div className="mb-3 form-check">
             <input type="checkbox" className="form-check-input" id="rememberMe" />
             <label className="form-check-label" htmlFor="rememberMe">
@@ -121,19 +122,21 @@ export default function LoginPage() {
             </label>
           </div>
 
-          {/* Sign In button */}
           <button
             type="submit"
-          className="btn btn-primary w-100 fw-semibold"
+            className="btn btn-primary w-100 fw-semibold"
             style={{
               background: "linear-gradient(135deg, #667eea, #764ba2)",
               border: "none",
             }}
           >
             Sign In
-          </button>
+            </button>
         </form>
       </div>
+
+      {/*  Toast container */}
+      <ToastContainer />
     </div>
   );
 }
