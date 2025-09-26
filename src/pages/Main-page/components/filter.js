@@ -1,7 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Container, Button, Card, Form } from "react-bootstrap";
+import { BsCaretRightFill } from "react-icons/bs";
+import { BsCaretDownFill } from "react-icons/bs";
 
 export default function Filters() {
+  const [showIcon, setIcon] = useState(false);
   useEffect(() => {
     require("bootstrap/dist/js/bootstrap.bundle.min.js");
   }, []);
@@ -12,14 +15,32 @@ export default function Filters() {
         <Card className="shadow-sm p-4">
           <h5 className="mb-3" id="headingOne">
             <button
-              className="btn btn-primary"
+              className="btn fw-normal "
               type="button"
               data-bs-toggle="collapse"
               data-bs-target="#collapseExample"
               aria-expanded="false"
               aria-controls="collapseExample"
+              onClick={() => setIcon(!showIcon)}
+              style={{
+                color: "#8c8c8c",
+                margin: "0",
+                weight: "600",
+                display: "flex",
+                align: "center",
+                gap: "8px",
+              }}
             >
-              Filters
+              <p
+                style={{
+                  margin: "0",
+                  color: "#262626",
+                }}
+                className="Filters"
+              >
+                Filters
+              </p>
+              {showIcon ? <BsCaretDownFill /> : <BsCaretRightFill />}
             </button>
           </h5>
           <div className="collapse" id="collapseExample">

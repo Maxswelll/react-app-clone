@@ -4,6 +4,7 @@ import "./style.css";
 import Header from "./components/header";
 import Filters from "./components/filter";
 import Log from "./components/Button";
+import Products from "./components/products";
 
 function BabyOutfitPage() {
   return (
@@ -14,6 +15,7 @@ function BabyOutfitPage() {
 
       {/* Filters Section */}
       <Filters />
+      <Products />
     </div>
   );
 }
