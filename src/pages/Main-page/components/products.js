@@ -2,12 +2,52 @@
 import { useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import products from "../items";
+import Filters from "./filter";
+import Footer from "./footer";
 
 export default function Products() {
   const [index, setIndex] = useState(null);
 
+  // ✅ store filters from Filters.js
+  const [filters, setFilters] = useState({
+    type: "",
+    size: "",
+    stock: "",
+    search: "",
+  });
+  const filterProducts = products.filter((p) => {
+    return (
+      (!filters.type || p.type === filters.type) &&
+      (!filters.size || p.size === filters.size) &&
+      (!filters.stock || (filters.stock === "in" ? p.inStock : !p.inStock)) &&
+      (!filters.search ||
+        p.name.toLowerCase().includes(filters.search.toLowerCase()))
+    );
+  });
+
+  const { type, size, stock, search } = filters;
+
+  // ✅ Filtering logic
+  const filteredProducts = products.filter((p) => {
+    // search by name
+    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
+
+    // filter by type
+    const matchType = type ? p.type === type : true;
+
+    // filter by size
+    const matchSize = size ? p.sizes.includes(size) : true;
+
+    // filter by stock
+    let matchStock = true;
+    if (stock === "in") matchStock = p.inStock;
+    if (stock === "out") matchStock = !p.inStock;
+
+    return matchSearch && matchType && matchSize && matchStock;
+  });
+
   const handleNext = () =>
-    setIndex((i) => (i < products.length - 1 ? i + 1 : i));
+    setIndex((i) => (i < filteredProducts.length - 1 ? i + 1 : i));
   const handlePrev = () => setIndex((i) => (i > 0 ? i - 1 : i));
 
   const cardStyle = {
@@ -55,8 +95,14 @@ export default function Products() {
 
   return (
     <div className="container py-4">
-      <div className="row g-3">
-        {products.map((product, i) => (
+      {/* ✅ Filters Section */}
+      <>
+        <Filters filters={filters} setFilters={setFilters} />
+        {/* products display */}
+      </>
+
+      <div className="row g-3 mt-3">
+        {filteredProducts.map((product, i) => (
           <div key={product.id} className="col-md-6 col-lg-4">
             <div
               style={cardStyle}
@@ -72,7 +118,7 @@ export default function Products() {
               }}
             >
               {/* Image */}
-              <div style={{ flex: "0 0 160px" }}>
+              <div style={{ flex: "0 0 200px" }}>
                 <img src={product.image} alt={product.name} style={imgStyle} />
               </div>
 
@@ -129,6 +175,13 @@ export default function Products() {
             </div>
           </div>
         ))}
+        <>
+          {/* footer number show*/}
+          <Footer
+            filteredCount={filterProducts.length}
+            totalCount={products.length}
+          />
+        </>
       </div>
 
       {/* ✅ Product Popup */}
@@ -161,8 +214,8 @@ export default function Products() {
                   style={{ minHeight: "500px" }}
                 >
                   <img
-                    src={products[index].image}
-                    alt={products[index].name}
+                    src={filteredProducts[index].image}
+                    alt={filteredProducts[index].name}
                     style={{
                       maxWidth: "100%",
                       maxHeight: "450px",
@@ -174,15 +227,17 @@ export default function Products() {
 
                 {/* Right: Product Info */}
                 <div className="flex-fill p-4 text-start">
-                  <span style={badgeStyle(products[index].inStock)}>
-                    {products[index].inStock ? "IN STOCK" : "OUT OF STOCK"}
+                  <span style={badgeStyle(filteredProducts[index].inStock)}>
+                    {filteredProducts[index].inStock
+                      ? "IN STOCK"
+                      : "OUT OF STOCK"}
                   </span>
 
                   <p style={{ marginTop: "16px" }}>
                     <strong>Available Sizes:</strong>
                     <br />
-                    {products[index].sizes.length > 0
-                      ? products[index].sizes.join(" • ")
+                    {filteredProducts[index].sizes.length > 0
+                      ? filteredProducts[index].sizes.join(" • ")
                       : "—"}
                   </p>
 
@@ -194,7 +249,7 @@ export default function Products() {
                         fontSize: "1.8rem",
                       }}
                     >
-                      ${products[index].salePrice.toFixed(2)}
+                      ${filteredProducts[index].salePrice.toFixed(2)}
                     </span>
                     <span
                       style={{
@@ -204,10 +259,10 @@ export default function Products() {
                         fontSize: "1.1rem",
                       }}
                     >
-                      ${products[index].price.toFixed(2)}
+                      ${filteredProducts[index].price.toFixed(2)}
                     </span>
                     <span style={discountStyle}>
-                      {products[index].discount}
+                      {filteredProducts[index].discount}
                     </span>
                   </div>
 
@@ -223,7 +278,7 @@ export default function Products() {
                     <button
                       className="btn btn-outline-primary"
                       onClick={handleNext}
-                      disabled={index === products.length - 1}
+                      disabled={index === filteredProducts.length - 1}
                     >
                       Next →
                     </button>

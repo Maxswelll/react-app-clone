@@ -5,17 +5,18 @@ import Header from "./components/header";
 import Filters from "./components/filter";
 import Log from "./components/Button";
 import Products from "./components/products";
+import Footer from "./components/footer";
+import Admin from "./components/Button";
 
 function BabyOutfitPage() {
   return (
     <div>
-      {/* Header / Navbar */}
       <Header />
       <Log />
-
-      {/* Filters Section */}
-      <Filters />
+      <Admin />
+      {/* <Filters /> */}
       <Products />
+      {/* <Footer /> */}
     </div>
   );
 }

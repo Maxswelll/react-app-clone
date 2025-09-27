@@ -1,112 +1,139 @@
+"use client";
 import { useEffect, useState } from "react";
-import { Container, Button, Card, Form } from "react-bootstrap";
-import { BsCaretRightFill } from "react-icons/bs";
-import { BsCaretDownFill } from "react-icons/bs";
+import {
+  Container,
+  Card,
+  Form,
+  Button,
+  Row,
+  Col,
+  Collapse,
+} from "react-bootstrap";
+import { BsCaretRightFill, BsCaretDownFill } from "react-icons/bs";
 
-export default function Filters() {
-  const [showIcon, setIcon] = useState(false);
+export default function Filters({ filters, setFilters }) {
+  const [showFilters, setShowFilters] = useState(false);
+
   useEffect(() => {
     require("bootstrap/dist/js/bootstrap.bundle.min.js");
   }, []);
 
+  // Reset all filters (show all products)
+  const showAllProducts = () => {
+    setFilters({ type: "", size: "", stock: "", search: "" });
+  };
+
   return (
-    <div>
-      <Container>
-        <Card className="shadow-sm p-4">
-          <h5 className="mb-3" id="headingOne">
-            <button
-              className="btn fw-normal "
-              type="button"
-              data-bs-toggle="collapse"
-              data-bs-target="#collapseExample"
-              aria-expanded="false"
-              aria-controls="collapseExample"
-              onClick={() => setIcon(!showIcon)}
-              style={{
-                color: "#8c8c8c",
-                margin: "0",
-                weight: "600",
-                display: "flex",
-                align: "center",
-                gap: "8px",
-              }}
-            >
-              <p
-                style={{
-                  margin: "0",
-                  color: "#262626",
-                }}
-                className="Filters"
-              >
-                Filters
-              </p>
-              {showIcon ? <BsCaretDownFill /> : <BsCaretRightFill />}
-            </button>
-          </h5>
-          <div className="collapse" id="collapseExample">
+    <Container>
+      <Card className="shadow-sm p-4 position-relative">
+        {/* Show All Products Button (TOP RIGHT) */}
+        <Button
+          className="btn btn-success position-absolute"
+          style={{ top: "15px", right: "15px" }}
+          onClick={showAllProducts}
+        >
+          Show All Products
+        </Button>
+
+        {/* Main Filter Toggle */}
+        <h5 className="mb-3">
+          <button
+            className="btn fw-bold"
+            type="button"
+            onClick={() => setShowFilters(!showFilters)}
+            style={{
+              color: "#262626",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+            }}
+          >
+            Filters
+            {showFilters ? <BsCaretDownFill /> : <BsCaretRightFill />}
+          </button>
+        </h5>
+
+        <Collapse in={showFilters}>
+          <div>
             {/* Type */}
             <div className="mb-3">
-              <label className="form-label fw-bold">TYPE:</label>
-              <div className="d-flex flex-wrap gap-2">
-                <Button variant="outline-primary rounded-3" size="sm">
-                  Dress
-                </Button>
-                <Button variant="outline-primary rounded-3" size="sm">
-                  Jumpsuit
-                </Button>
-                <Button variant="outline-primary rounded-3" size="sm">
-                  Pyjama
-                </Button>
-                <Button variant="outline-primary rounded-3" size="sm">
-                  Shirt
-                </Button>
-                <Button variant="outline-primary rounded-3" size="sm">
-                  ShirtAndShort
-                </Button>
-              </div>
+              <Form.Label className="fw-bold">Type:</Form.Label>
+              <Form.Select
+                value={filters.type}
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, type: e.target.value }))
+                }
+              >
+                <option value="">Select types</option>
+                <option value="dress">Dress</option>
+                <option value="jumpsuit">Jumpsuit</option>
+                <option value="pyjama">Pyjama</option>
+                <option value="shirt">Shirt</option>
+                <option value="shirtandshort">Shirt & Short</option>
+              </Form.Select>
             </div>
 
             {/* Size */}
             <div className="mb-3">
-              <label className="form-label fw-bold">SIZE:</label>
-              <div className="d-flex flex-wrap gap-2">
-                <Button variant="outline-secondary rounded-3" size="sm">
-                  66 (56-65 cm, 3-6 kg)
-                </Button>
-                <Button variant="outline-secondary rounded-3" size="sm">
-                  73 (65-73 cm, 6-9 kg)
-                </Button>
-                <Button variant="outline-secondary rounded-3" size="sm">
-                  80 (73-81 cm, 9-11 kg)
-                </Button>
-                <Button variant="outline-secondary rounded-3" size="sm">
-                  90 (81-91 cm, 11-13 kg)
-                </Button>
-                <Button variant="outline-secondary rounded-3 " size="sm">
-                  100 (91-101 cm, 13-15 kg)
-                </Button>
-                <Button variant="outline-secondary rounded-3" size="sm">
-                  110 (101-110 cm, 15-17 kg)
-                </Button>
-              </div>
+              <Form.Label className="fw-bold">Size:</Form.Label>
+              <Form.Select
+                value={filters.size}
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, size: e.target.value }))
+                }
+              >
+                <option value="">Select sizes</option>
+                <option value="66">66 (56-65 cm, 3-6 kg)</option>
+                <option value="73">73 (65-73 cm, 6-9 kg)</option>
+                <option value="80">80 (73-81 cm, 9-11 kg)</option>
+                <option value="90">90 (81-91 cm, 11-13 kg)</option>
+                <option value="100">100 (91-101 cm, 13-15 kg)</option>
+                <option value="110">110 (101-110 cm, 15-17 kg)</option>
+              </Form.Select>
             </div>
 
             {/* Stock */}
             <div className="mb-3">
-              <label className="form-label fw-bold">STOCK:</label>
-              <span>ℹ️</span>
-              <Form>
-                <Form.Check type="switch" id="stockSwitch" label="In stock" />
-              </Form>
+              <Form.Label className="fw-bold">Stock:</Form.Label>
+              <Form.Select
+                value={filters.stock}
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, stock: e.target.value }))
+                }
+              >
+                <option value="">Select stock status</option>
+                <option value="in">In Stock</option>
+                <option value="out">Out of Stock</option>
+              </Form.Select>
             </div>
-            {/*line*/}
-            <div className="border-top my-3"></div>
 
-            {/* Product count */}
-            <p className="text-muted small hr">showing 20 of 138 products</p>
+            {/* Search */}
+            <Row className="align-items-center mt-3">
+              <Col xs={9}>
+                <Form.Control
+                  type="text"
+                  placeholder="Search products..."
+                  value={filters.search}
+                  onChange={(e) =>
+                    setFilters((prev) => ({ ...prev, search: e.target.value }))
+                  }
+                />
+              </Col>
+              <Col xs={3} className="text-end">
+                <Button
+                  variant="primary"
+                  type="button"
+                  onClick={() =>
+                    setFilters((prev) => ({ ...prev, search: filters.search }))
+                  }
+                >
+                  Search
+                </Button>
+              </Col>
+            </Row>
           </div>
-        </Card>
-      </Container>
-    </div>
+        </Collapse>
+      </Card>
+    </Container>
   );
 }
