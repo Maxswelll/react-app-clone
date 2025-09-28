@@ -2,14 +2,16 @@
 import "bootstrap/dist/css/bootstrap.min.css";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import initialProducts from "./components/products";
-import StatCards from "./components/card";
+import initialProducts from "./components/StockProducts";
+import StatCards from "./components/StockCard";
 import Header from "./components/header";
-import ProductToolbar from "./components/selection";
+import ProductToolbar from "./components/StockSelection";
 import Sidebar from "./components/sidebar";
-import Pagination from "./components/Pagination";  
-import ProductTable from "./components/ProductTable"; 
-import ProductFilters from "./components/ProductFilters";
+import Pagination from "./components/StockPagination";  
+import ProductTable from "./components/StockProductTable"; 
+import ProductFilters from "./components/StockProductFilters";
+import BatchManagement from "./components/BatchManagement";
+
 
 
 export default function AdminPage() {
@@ -111,7 +113,13 @@ export default function AdminPage() {
         );
 
       case "batch":
-        return <div className="card p-4">Batch Management</div>;
+        return (
+          <> 
+        <BatchManagement products={products} 
+        />
+        
+            </>
+        );
       case "expense":
         return <div className="card p-4">Expense</div>;
       case "income":
