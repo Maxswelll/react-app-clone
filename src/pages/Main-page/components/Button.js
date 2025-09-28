@@ -26,7 +26,7 @@ export default function Log() {
         onClick={handleAdmin}
         style={{ padding: "7px" }}
       >
-        <SiPhpmyadmin />
+        <SiPhpmyadmin size={20} />
         Admin
       </button>
 
@@ -36,7 +36,7 @@ export default function Log() {
         onClick={handleLogout}
         style={{ padding: "7px" }}
       >
-        <IoMdLogOut />
+        <IoMdLogOut size={20} />
         Logout
       </button>
     </div>

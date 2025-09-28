@@ -1,168 +1,146 @@
 "use client";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { useRouter } from "next/navigation";
-import { IoMdLogOut } from "react-icons/io";
-import { Navbar, Container } from "react-bootstrap";
-import { LiaBusinessTimeSolid } from "react-icons/lia";
+import { useState } from "react";
+import initialProducts from "./components/products";
+import StatCards from "./components/card";
+import Header from "./components/header";
+import ProductToolbar from "./components/selection";
+import Sidebar from "./components/sidebar";
+import Pagination from "./components/Pagination";  
+import ProductTable from "./components/ProductTable"; 
+import ProductFilters from "./components/ProductFilters";
 
 
 export default function AdminPage() {
   const router = useRouter();
+  const [activeMenu, setActiveMenu] = useState("stock");
+  const [products, setProducts] = useState(initialProducts);
 
+  // pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  // filters + search + Edit
+  const [filterType, setFilterType] = useState("All");
+  const [filterStatus, setFilterStatus] = useState("All");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [editingProduct, setEditingProduct] = useState(null);
+
+  // Add product
+  const addProduct = (newProduct) => {
+    setProducts((prev) => [...prev, newProduct]);
+  };
+
+  // Edit product
+  const editProduct = (updated) => {
+    setProducts((prev) =>
+      prev.map((p) => (p.id === updated.id ? updated : p))
+    );
+  };
+
+  // Delete product
+  const handleDelete = (id) => {
+    setProducts((prev) => prev.filter((p) => p.id !== id));
+  };
+
+  // filter + search logic
+  const filteredProducts = products.filter((p) => {
+    const typeMatch = filterType === "All" || p.type === filterType;
+    const statusMatch = filterStatus === "All" || p.status === filterStatus;
+    const searchMatch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
+    return typeMatch && statusMatch && searchMatch;
+  });
+
+  // pagination logic
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentProducts = filteredProducts.slice(
+    startIndex,
+    startIndex + itemsPerPage
+  );
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+
+  // Logout
   const handleLogout = () => {
     router.push("/login?logout=success");
   };
 
-  const products = [
-    { id: 1, name: "Dress", buyPrice: 5.0, sellPrice: 7.0, stock: 3, status: "In Stock" },
-    { id: 2, name: "Shirt", buyPrice: 4.0, sellPrice: 6.0, stock: 0, status: "Out of Stock" },
-    { id: 3, name: "Baby Suit", buyPrice: 6.0, sellPrice: 8.0, stock: 5, status: "In Stock" },
-  ];
+  const renderContent = () => {
+    switch (activeMenu) {
+      case "stock":
+        return (
+          <>
+            {/* Summary Cards - based on current filtered data */}
+            <StatCards products={currentProducts} />
+
+            {/* Toolbar (Add + Edit) */}
+            <ProductToolbar
+              onAddProduct={addProduct}
+              onEditProduct={editProduct}
+              editingProduct={editingProduct}
+              setEditingProduct={setEditingProduct}
+            />
+
+            {/* Filters + Search */}
+           <ProductFilters
+              filterType={filterType}
+              setFilterType={setFilterType}
+              filterStatus={filterStatus}
+              setFilterStatus={setFilterStatus}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              setCurrentPage={setCurrentPage}
+/>
+
+            {/*  Product Table */}
+            <ProductTable
+              products={currentProducts}
+              onDelete={handleDelete}
+              setEditingProduct={setEditingProduct}
+            />
+
+            {/*  Pagination */}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              itemsPerPage={itemsPerPage}
+              setCurrentPage={setCurrentPage}
+              setItemsPerPage={setItemsPerPage}
+            />
+          </>
+        );
+
+      case "batch":
+        return <div className="card p-4">Batch Management</div>;
+      case "expense":
+        return <div className="card p-4">Expense</div>;
+      case "income":
+        return <div className="card p-4">Income</div>;
+      default:
+        return null;
+    }
+  };
 
   return (
     <div>
-      {/* Top Navbar */}
-      <Navbar bg="light" className="shadow-sm mb-4">
-        <Container className="d-flex justify-content-between align-items-center">
-          <div className="d-flex align-items-center">
-            <img
-              src="https://babyoutfitcambodia.netlify.app/assets/profile_image1.png"
-              alt="Logo"
-              className="rounded-5 me-3"
-              style={{
-                width: "48px",
-                height: "48px",
-                objectFit: "cover",
-                border: "2px solid #ddd",
-                padding: "5px",
-              }}
-            />
-            <div
-            style={{
-                background: "linear-gradient(135deg, #667eea, #764ba2)",
-                WebkitBackgroundClip:"text",
-                WebkitTextFillColor: "transparent",
-            }}
-            >
-              <h4 className="fw-bold mb-0">Baby Outfit Cambodia</h4>
-              <small className="text-muted">Premium Baby Clothes</small>
-            </div>
-          </div>
+      {/* Header */}
+      <Header onLogout={handleLogout} />
 
-          <div>
-            <button
-              className="btn btn-outline-primary me-2"
-              onClick={() => router.push("/Main-page")}
-            >
-                <LiaBusinessTimeSolid />   Products
-            </button>
-            <button className="btn btn-outline-danger" onClick={handleLogout}>
-              <IoMdLogOut /> Logout
-            </button>
-          </div>
-        </Container>
-      </Navbar>
-
-      {/* Layout with Sidebar + Main Content */}
-      <div className="container-fluid">
-        <div className="row">
+      {/* Layout */}
+      <div
+        className="container-fluid"
+        style={{
+          maxWidth: "1600px",
+          margin: "0 auto",
+          padding: "0 2rem 2rem",
+        }}
+      >
+        <div className="d-flex gap-4">
           {/* Sidebar */}
-          <div className="col-md-2 bg-light p-3 min-vh-100">
-            <h5>Menu</h5>
-            <ul className="nav flex-column">
-              <li className="nav-item">
-                <a className="nav-link" href="#">Stock Management</a>
-              </li>
-              <li className="nav-item">
-                <a className="nav-link" href="#">Batch Management</a>
-              </li>
-              <li className="nav-item">
-                <a className="nav-link" href="#">Expense</a>
-              </li>
-              <li className="nav-item">
-                <a className="nav-link" href="#">Income</a>
-              </li>
-            </ul>
-          </div>
+          <Sidebar activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
 
           {/* Main Content */}
-          <div className="col-md-10 p-4">
-            {/* Summary Cards */}
-            <div className="row mb-4">
-              <div className="col-md-3">
-                <div className="card text-center">
-                  <div className="card-body">
-                    <h5>Total Products</h5>
-                    <p className="fs-4 fw-bold">20</p>
-                  </div>
-                </div>
-              </div>
-              <div className="col-md-3">
-                <div className="card text-center">
-                  <div className="card-body">
-                    <h5>In Stock</h5>
-                    <p className="fs-4 fw-bold text-success">17</p>
-                  </div>
-                </div>
-              </div>
-              <div className="col-md-3">
-                <div className="card text-center">
-                  <div className="card-body">
-                    <h5>Out of Stock</h5>
-                    <p className="fs-4 fw-bold text-danger">3</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Products Table */}
-            <div className="card">
-              <div className="card-header d-flex justify-content-between align-items-center">
-                <h5>Product List</h5>
-                <button className="btn btn-primary">+ Add New Product</button>
-              </div>
-              <div className="card-body table-responsive">
-                <table className="table table-striped">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Name</th>
-                      <th>Buy Price</th>
-                      <th>Sell Price</th>
-                      <th>Stock</th>
-                      <th>Status</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {products.map((p) => (
-                      <tr key={p.id}>
-                        <td>{p.id}</td>
-                        <td>{p.name}</td>
-                        <td>${p.buyPrice.toFixed(2)}</td>
-                        <td>${p.sellPrice.toFixed(2)}</td>
-                        <td>{p.stock}</td>
-                        <td>
-                          <span
-                            className={`badge ${
-                              p.status === "In Stock" ? "bg-success" : "bg-danger"
-                            }`}
-                          >
-                            {p.status}
-                          </span>
-                        </td>
-                        <td>
-                          <button className="btn btn-sm btn-info me-2">Edit</button>
-                          <button className="btn btn-sm btn-danger">Delete</button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-          </div>
+          <div className="flex-grow-1">{renderContent()}</div>
         </div>
       </div>
     </div>

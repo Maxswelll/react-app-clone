@@ -74,7 +74,7 @@ export default function LoginPage() {
             </label>
             <div className="input-group">
               <span className="input-group-text bg-light">
-                <VscAccount />
+                <VscAccount  size={20} color="#00e9faff"/>
               </span>
               <input
                 type="text"
@@ -94,7 +94,7 @@ export default function LoginPage() {
             </label>
             <div className="input-group">
               <span className="input-group-text bg-light">
-                <CiLock />
+                <CiLock  size={20} color="#00e9faff"/>
               </span>
               <input
                 type={showPassword ? "text":"password"}
@@ -110,7 +110,7 @@ export default function LoginPage() {
                 style={{cursor: "poniter"}}
                 onClick={() =>setShowPassword(!showPassword)}
                 >
-                  {showPassword? <FiEye/>:<FiEyeOff />}
+                  {showPassword? <FiEye size={15}/>:<FiEyeOff  size={15}/>}
               </span>
             </div>
           </div>

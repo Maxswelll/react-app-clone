@@ -15,19 +15,10 @@ export default function Products() {
     stock: "",
     search: "",
   });
-  const filterProducts = products.filter((p) => {
-    return (
-      (!filters.type || p.type === filters.type) &&
-      (!filters.size || p.size === filters.size) &&
-      (!filters.stock || (filters.stock === "in" ? p.inStock : !p.inStock)) &&
-      (!filters.search ||
-        p.name.toLowerCase().includes(filters.search.toLowerCase()))
-    );
-  });
 
   const { type, size, stock, search } = filters;
 
-  // ✅ Filtering logic
+  // ✅ Single Filtering logic
   const filteredProducts = products.filter((p) => {
     // search by name
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
@@ -96,92 +87,103 @@ export default function Products() {
   return (
     <div className="container py-4">
       {/* ✅ Filters Section */}
-      <>
-        <Filters filters={filters} setFilters={setFilters} />
-        {/* products display */}
-      </>
+      <Filters filters={filters} setFilters={setFilters} />
 
+      {/* ✅ Products Section */}
       <div className="row g-3 mt-3">
-        {filteredProducts.map((product, i) => (
-          <div key={product.id} className="col-md-6 col-lg-4">
-            <div
-              style={cardStyle}
-              className="d-flex align-items-center"
-              onClick={() => setIndex(i)}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow = "0 6px 16px rgba(0,0,0,0.2)";
-                e.currentTarget.style.transform = "translateY(-5px)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = "0 2px 8px #0000000f";
-                e.currentTarget.style.transform = "translateY(0)";
-              }}
-            >
-              {/* Image */}
-              <div style={{ flex: "0 0 200px" }}>
-                <img src={product.image} alt={product.name} style={imgStyle} />
-              </div>
+        {filteredProducts.length === 0 ? (
+          <div className="text-center py-5 text-muted">
+            <h4>No products found 😢</h4>
+            <p>Try adjusting your filters or search keywords.</p>
+          </div>
+        ) : (
+          filteredProducts.map((product, i) => (
+            <div key={product.id} className="col-md-6 col-lg-4">
+              <div
+                style={cardStyle}
+                className="d-flex align-items-center"
+                onClick={() => setIndex(i)}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow =
+                    "0 6px 16px rgba(0,0,0,0.2)";
+                  e.currentTarget.style.transform = "translateY(-5px)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow = "0 2px 8px #0000000f";
+                  e.currentTarget.style.transform = "translateY(0)";
+                }}
+              >
+                {/* Image */}
+                <div style={{ flex: "0 0 200px" }}>
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    style={imgStyle}
+                  />
+                </div>
 
-              {/* Info */}
-              <div style={{ marginLeft: "12px", flex: 1 }}>
-                {/* Stock Badge */}
-                <span style={badgeStyle(product.inStock)}>
-                  {product.inStock ? "IN STOCK" : "OUT OF STOCK"}
-                </span>
-
-                {/* Sizes */}
-                <p
-                  style={{
-                    margin: "6px 0",
-                    fontSize: ".7rem",
-                    fontWeight: "600",
-                    color: "#64748b",
-                    letterSpacing: ".5px",
-                  }}
-                >
-                  <span style={{ fontWeight: "normal", color: "#64748b" }}>
-                    AVAILABLE SIZE
+                {/* Info */}
+                <div style={{ marginLeft: "12px", flex: 1 }}>
+                  {/* Stock Badge */}
+                  <span style={badgeStyle(product.inStock)}>
+                    {product.inStock ? "IN STOCK" : "OUT OF STOCK"}
                   </span>
-                  <br />
-                  <span style={{ fontWeight: "bold", color: "#000" }}>
-                    {product.sizes.length > 0 ? product.sizes.join(" • ") : "—"}
-                  </span>
-                </p>
 
-                {/* Price Section */}
-                <div style={{ marginTop: "4px" }}>
-                  <span
+                  {/* Sizes */}
+                  <p
                     style={{
-                      color: "#dc3545",
-                      fontWeight: "bold",
-                      fontSize: "1.1rem",
+                      margin: "6px 0",
+                      fontSize: ".7rem",
+                      fontWeight: "600",
+                      color: "#64748b",
+                      letterSpacing: ".5px",
                     }}
                   >
-                    ${product.salePrice.toFixed(2)}
-                  </span>
-                  <span
-                    style={{
-                      textDecoration: "line-through",
-                      color: "#888",
-                      marginLeft: "6px",
-                      fontSize: "0.9rem",
-                    }}
-                  >
-                    ${product.price.toFixed(2)}
-                  </span>
-                  <span style={discountStyle}>{product.discount}</span>
+                    <span style={{ fontWeight: "normal", color: "#64748b" }}>
+                      AVAILABLE SIZE
+                    </span>
+                    <br />
+                    <span style={{ fontWeight: "bold", color: "#000" }}>
+                      {product.sizes.length > 0
+                        ? product.sizes.join(" • ")
+                        : "—"}
+                    </span>
+                  </p>
+
+                  {/* Price Section */}
+                  <div style={{ marginTop: "4px" }}>
+                    <span
+                      style={{
+                        color: "#dc3545",
+                        fontWeight: "bold",
+                        fontSize: "1.1rem",
+                      }}
+                    >
+                      ${product.salePrice.toFixed(2)}
+                    </span>
+                    <span
+                      style={{
+                        textDecoration: "line-through",
+                        color: "#888",
+                        marginLeft: "6px",
+                        fontSize: "0.9rem",
+                      }}
+                    >
+                      ${product.price.toFixed(2)}
+                    </span>
+                    <span style={discountStyle}>{product.discount}</span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
-        <>
-          {/* footer number show*/}
-          <Footer
-            filteredCount={filterProducts.length}
-            totalCount={products.length}
-          />
-        </>
+          ))
+        )}
+
+        {/* ✅ Footer */}
+        <Footer
+          filteredCount={filteredProducts.length}
+          totalCount={products.length}
+        />
       </div>
 
       {/* ✅ Product Popup */}

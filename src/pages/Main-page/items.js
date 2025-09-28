@@ -165,7 +165,7 @@ const products = [
     inStock: true,
     sizes: ["73", "80", "90"],
     image:
-      "https://res.cloudinary.com/dpcmqdi4w/image/upload/v1756114641/products/hxtf6waqsezuqnzokd1k.jpg",
+      "https://res.cloudinary.com/dpcmqdi4w/image/upload/v1756114439/products/ohdqtc92pzuirxdpmjlt.jpg",
   },
   {
     id: 15,
@@ -193,20 +193,8 @@ const products = [
   },
   {
     id: 17,
-    name: "Set 3",
-    type: "set",
-    price: 8.6,
-    salePrice: 5.7,
-    discount: "18% OFF",
-    inStock: false,
-    sizes: [],
-    image:
-      "https://res.cloudinary.com/dpcmqdi4w/image/upload/v1757235205/products/kbt9goh2skmboxxvnkgt.jpg",
-  },
-  {
-    id: 18,
-    name: "Set 4",
-    type: "set",
+    name: "Shirt",
+    type: "Shirt",
     price: 5.777,
     salePrice: 4.1,
     discount: "18% OFF",
@@ -216,8 +204,8 @@ const products = [
       "https://res.cloudinary.com/dpcmqdi4w/image/upload/v1758637013/products/cjaq8hu6xdjorukff0bi.jpg",
   },
   {
-    id: 19,
-    name: "Dress 19",
+    id: 18,
+    name: "Dress 18",
     type: "dress",
     price: 6.7,
     salePrice: 4.99,
@@ -226,42 +214,6 @@ const products = [
     sizes: ["73", "80", "90"],
     image:
       "https://res.cloudinary.com/dpcmqdi4w/image/upload/v1758612161/products/dyru5y5yddbouxv8lujg.jpg",
-  },
-  {
-    id: 20,
-    name: "Dress 20",
-    type: "dress",
-    price: 55.8,
-    salePrice: 7.8,
-    discount: "74% OFF",
-    inStock: true,
-    sizes: ["66", "73", "80", "90", "100"],
-    image:
-      "https://res.cloudinary.com/dpcmqdi4w/image/upload/v1756114387/products/svtuq8odg8j5pchy4a4e.jpg",
-  },
-  {
-    id: 21,
-    name: "Set 3",
-    type: "set",
-    price: 8.6,
-    salePrice: 5.7,
-    discount: "18% OFF",
-    inStock: false,
-    sizes: [],
-    image:
-      "https://res.cloudinary.com/dpcmqdi4w/image/upload/v1757235205/products/kbt9goh2skmboxxvnkgt.jpg",
-  },
-  {
-    id: 21,
-    name: "Set 4",
-    type: "jumpsuit",
-    price: 5.777,
-    salePrice: 4.1,
-    discount: "18% OFF",
-    inStock: true,
-    sizes: ["34", "67", "123"],
-    image:
-      "https://res.cloudinary.com/dpcmqdi4w/image/upload/v1758637013/products/cjaq8hu6xdjorukff0bi.jpg",
   },
 ];
 
