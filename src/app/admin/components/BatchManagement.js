@@ -2,6 +2,7 @@
 import { useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Pagination from "./StockPagination";
+import { AiOutlineDollarCircle } from "react-icons/ai";
 
 export default function BatchManagement({ products }) {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
@@ -64,14 +65,16 @@ export default function BatchManagement({ products }) {
   };
 
   return (
-    <div className="container mt-4">
-      <h3 className="text-center text-primary">💲 Batch Management</h3>
-      <p className="text-center text-muted">
+    <div className="container px-2 px-md-4 mt-4">
+      <h3 className="text-center text-md-start text-info">
+        <AiOutlineDollarCircle size={32} className="me-2" /> Batch Management
+      </h3>
+      <p className="text-center text-md-start text-muted mb-3">
         To manage product for batch selling.
       </p>
 
       <div
-        className="table-responsive shadow rounded bg-white p-3"
+        className="table-responsive shadow rounded bg-white p-2 p-md-3"
         style={{ transition: "all 0.3s ease-in-out" }}
       >
         <table className="table table-hover align-middle">
@@ -79,7 +82,9 @@ export default function BatchManagement({ products }) {
             <tr>
               <th>Image</th>
               <th>Price</th>
+              {/* Hide size column on extra-small screens */}
               <th
+                className="d-none d-sm-table-cell"
                 style={{ cursor: "pointer", userSelect: "none" }}
                 onClick={() => handleSort("size")}
               >
@@ -110,12 +115,7 @@ export default function BatchManagement({ products }) {
           </thead>
           <tbody>
             {currentProducts.map((p, i) => (
-              <tr
-                key={i}
-                style={{
-                  animation: "fadeIn 0.4s ease-in-out",
-                }}
-              >
+              <tr key={i} style={{ animation: "fadeIn 0.4s ease-in-out" }}>
                 <td>
                   <img
                     src={p.image}
@@ -126,13 +126,35 @@ export default function BatchManagement({ products }) {
                   />
                 </td>
                 <td>${p.Price}</td>
-                <td>{p.Size}</td>
+                <td className="d-none d-sm-table-cell">{p.Size}</td>
                 <td>{p.stock}</td>
                 <td>
                   {p.stock > 0 ? (
-                    <span className="badge bg-success">In Stock</span>
+                    <span
+                      style={{
+                        color: "#389e0d",
+                        background: "#f6ffed",
+                        border: "2px solid #b7eb8f",
+                        fontWeight: "600",
+                        borderRadius: "6px",
+                        padding: ".25rem .75rem",
+                      }}
+                    >
+                      In Stock
+                    </span>
                   ) : (
-                    <span className="badge bg-danger">Out of Stock</span>
+                    <span
+                      style={{
+                        fontWeight: "600",
+                        borderRadius: "6px",
+                        padding: ".25rem .75rem",
+                        color: "#cf1322",
+                        background: "#fff1f0",
+                        border: "2px solid #ffa39e",
+                      }}
+                    >
+                      Out of Stock
+                    </span>
                   )}
                 </td>
               </tr>

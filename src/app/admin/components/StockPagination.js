@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
 export default function Pagination({
   currentPage,
@@ -8,12 +9,29 @@ export default function Pagination({
   setCurrentPage,
   setItemsPerPage,
 }) {
+  // Generate page numbers (with ellipsis)
+  const getPages = () => {
+    const pages = [];
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      if (currentPage <= 3) {
+        pages.push(1, 2, 3, "...", totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1, "...", totalPages - 2, totalPages - 1, totalPages);
+      } else {
+        pages.push(1, "...", currentPage, "...", totalPages);
+      }
+    }
+    return pages;
+  };
+
   return (
-    <div className="d-flex justify-content-between align-items-center mt-3">
+    <div className="d-flex flex-column flex-md-row justify-content-between align-items-center mt-3 gap-3">
       {/* Items per page */}
       <div>
         <select
-          className="form-select d-inline-block w-auto"
+          className="form-select w-auto"
           value={itemsPerPage}
           onChange={(e) => {
             setItemsPerPage(Number(e.target.value));
@@ -35,23 +53,26 @@ export default function Pagination({
               className="page-link"
               onClick={() => setCurrentPage(currentPage - 1)}
             >
-              {"<"}
+              <FaChevronLeft />
             </button>
           </li>
 
-          {Array.from({ length: totalPages }, (_, i) => (
-            <li
-              key={i}
-              className={`page-item ${currentPage === i + 1 ? "active" : ""}`}
-            >
-              <button
-                className="page-link"
-                onClick={() => setCurrentPage(i + 1)}
+          {getPages().map((p, idx) =>
+            p === "..." ? (
+              <li key={idx} className="page-item disabled">
+                <span className="page-link">...</span>
+              </li>
+            ) : (
+              <li
+                key={p}
+                className={`page-item ${currentPage === p ? "active" : ""}`}
               >
-                {i + 1}
-              </button>
-            </li>
-          ))}
+                <button className="page-link" onClick={() => setCurrentPage(p)}>
+                  {p}
+                </button>
+              </li>
+            )
+          )}
 
           <li
             className={`page-item ${
@@ -62,7 +83,7 @@ export default function Pagination({
               className="page-link"
               onClick={() => setCurrentPage(currentPage + 1)}
             >
-              {">"}
+              <FaChevronRight />
             </button>
           </li>
         </ul>
@@ -74,7 +95,7 @@ export default function Pagination({
           type="number"
           min="1"
           max={totalPages}
-          className="form-control d-inline-block w-auto"
+          className="form-control w-auto"
           placeholder="Go to"
           onKeyDown={(e) => {
             if (e.key === "Enter") {

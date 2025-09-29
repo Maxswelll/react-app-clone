@@ -11,7 +11,7 @@ export default function ProductFilters({
   setCurrentPage,
 }) {
   return (
-    <div className="d-flex gap-3 my-3">
+    <div className="d-flex flex-wrap gap-3 my-3">
       {/* Product Type Filter */}
       <select
         className="form-select w-auto"

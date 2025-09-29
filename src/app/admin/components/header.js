@@ -8,10 +8,10 @@ export default function Header({ onLogout }) {
   const router = useRouter();
 
   return (
-    <Navbar bg="light" className="shadow-sm mb-4">
-      <Container className="d-flex justify-content-between align-items-center">
+    <Navbar bg="light" expand="md" className="shadow-sm mb-4">
+      <Container className="flex-column flex-md-row justify-content-between align-items-center gap-3">
         {/* Logo + Brand */}
-        <div className="d-flex align-items-center">
+        <div className="d-flex align-items-center text-center text-md-start">
           <img
             src="https://babyoutfitcambodia.netlify.app/assets/profile_image1.png"
             alt="Logo"
@@ -37,9 +37,9 @@ export default function Header({ onLogout }) {
         </div>
 
         {/* Buttons */}
-        <div>
+        <div className="d-flex flex-column flex-md-row gap-2">
           <button
-            className="btn btn-outline-primary me-2"
+            className="btn btn-outline-primary"
             onClick={() => router.push("/Main-page")}
           >
             <LiaBusinessTimeSolid size={20} /> Products

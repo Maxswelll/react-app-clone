@@ -2,6 +2,8 @@
 import "bootstrap/dist/css/bootstrap.min.css";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+
+// Stock system components
 import initialProducts from "./components/StockProducts";
 import StatCards from "./components/StockCard";
 import Header from "./components/header";
@@ -11,8 +13,10 @@ import Pagination from "./components/StockPagination";
 import ProductTable from "./components/StockProductTable"; 
 import ProductFilters from "./components/StockProductFilters";
 import BatchManagement from "./components/BatchManagement";
+import IncomeManagment from "./components/IncomeManagment";
 
-
+// Expense system
+import ExpenseManagement from "./components/ExpensesManagment";
 
 export default function AdminPage() {
   const router = useRouter();
@@ -67,6 +71,7 @@ export default function AdminPage() {
     router.push("/login?logout=success");
   };
 
+  // Render main content based on activeMenu
   const renderContent = () => {
     switch (activeMenu) {
       case "stock":
@@ -84,7 +89,7 @@ export default function AdminPage() {
             />
 
             {/* Filters + Search */}
-           <ProductFilters
+            <ProductFilters
               filterType={filterType}
               setFilterType={setFilterType}
               filterStatus={filterStatus}
@@ -92,7 +97,7 @@ export default function AdminPage() {
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
               setCurrentPage={setCurrentPage}
-/>
+            />
 
             {/*  Product Table */}
             <ProductTable
@@ -113,17 +118,14 @@ export default function AdminPage() {
         );
 
       case "batch":
-        return (
-          <> 
-        <BatchManagement products={products} 
-        />
-        
-            </>
-        );
+        return <BatchManagement products={products} />;
+
       case "expense":
-        return <div className="card p-4">Expense</div>;
+        return <ExpenseManagement products={products} />;
+
       case "income":
-        return <div className="card p-4">Income</div>;
+        return <IncomeManagment products={products}/>;
+
       default:
         return null;
     }
