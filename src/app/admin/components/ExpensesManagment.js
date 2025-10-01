@@ -11,7 +11,7 @@ import {
 } from "react-bootstrap";
 import { motion } from "framer-motion";
 import { CiEdit } from "react-icons/ci";
-import { AiOutlineDelete } from "react-icons/ai";
+import { AiOutlineDelete, AiOutlineShoppingCart } from "react-icons/ai";
 import {
   BsBag,
   BsGraphUp,
@@ -20,12 +20,12 @@ import {
   BsArrowUp,
   BsArrowDown,
 } from "react-icons/bs";
-import { AiOutlineShoppingCart } from "react-icons/ai";
-import { initialExpenses } from "./StockProducts";
 import ExpenseStatCards from "./ExpensesCard";
+import Expenses from "./expensesData";
 
 export default function ExpenseManagement() {
-  const [expenses, setExpenses] = useState(initialExpenses || []);
+  // start with no data
+  const [expenses, setExpenses] = useState(Expenses);
   const [editingExpense, setEditingExpense] = useState(null);
   const [filterType, setFilterType] = useState("All");
   const [filterDate, setFilterDate] = useState("");
@@ -71,11 +71,9 @@ export default function ExpenseManagement() {
     ]);
     setShowModal(false);
     setNewExpense({ type: "boost page", price: "", description: "", date: "" });
-    // jump to last page so user sees the newly added item
-    // (will be corrected by useEffect that clamps currentPage)
   };
 
-  // Filter + Sort (immutable)
+  // Filter + Sort
   const filteredAndSorted = expenses
     .filter((e) => (filterType === "All" ? true : e.type === filterType))
     .filter((e) => (!filterDate ? true : e.date === filterDate))
@@ -98,16 +96,17 @@ export default function ExpenseManagement() {
   const indexOfFirst = indexOfLast - itemsPerPage;
   const currentExpenses = filteredAndSorted.slice(indexOfFirst, indexOfLast);
 
-  // Keep page sensible when filters/sort
+  // Reset page when filters/sort change
   useEffect(() => {
     setCurrentPage(1);
   }, [filterType, filterDate, sortConfig.key, sortConfig.direction]);
 
+  // Clamp current page
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(totalPages || 1);
   }, [totalPages, currentPage]);
 
-  // Totals (use numeric prices; parseFloat defensively)
+  // Totals
   const total = expenses.reduce((t, e) => t + (parseFloat(e.price) || 0), 0);
   const productTotal = expenses
     .filter((e) => e.type === "product purchase")
@@ -172,7 +171,7 @@ export default function ExpenseManagement() {
     }
   };
 
-  // Cards for stats
+  // Stat cards
   const cards = [
     {
       id: "total",
@@ -242,7 +241,7 @@ export default function ExpenseManagement() {
         Track and manage all business expenses
       </p>
 
-      {/* Stats Cards */}
+      {/* Stats */}
       <ExpenseStatCards cards={cards} />
 
       {/* Filters + Add */}
@@ -294,22 +293,10 @@ export default function ExpenseManagement() {
         >
           <thead className="table-light">
             <tr>
-              <th
-                style={{
-                  color: "#344767",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
-              >
-                Type
-              </th>
+              <th style={{ color: "#344767", fontWeight: 600 }}>Type</th>
               <th
                 onClick={() => handleSort("price")}
-                style={{
-                  color: "#344767",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
+                style={{ color: "#344767", fontWeight: 600, cursor: "pointer" }}
               >
                 Price{" "}
                 {sortConfig.key === "price" ? (
@@ -320,22 +307,10 @@ export default function ExpenseManagement() {
                   )
                 ) : null}
               </th>
-              <th
-                style={{
-                  color: "#344767",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
-              >
-                Description
-              </th>
+              <th style={{ color: "#344767", fontWeight: 600 }}>Description</th>
               <th
                 onClick={() => handleSort("date")}
-                style={{
-                  color: "#344767",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
+                style={{ color: "#344767", fontWeight: 600, cursor: "pointer" }}
               >
                 Date{" "}
                 {sortConfig.key === "date" ? (
@@ -346,15 +321,7 @@ export default function ExpenseManagement() {
                   )
                 ) : null}
               </th>
-              <th
-                style={{
-                  color: "#344767",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
-              >
-                Actions
-              </th>
+              <th style={{ color: "#344767", fontWeight: 600 }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -445,7 +412,7 @@ export default function ExpenseManagement() {
         </Row>
       )}
 
-      {/* Edit Expense Modal */}
+      {/* Edit Modal */}
       <Modal
         show={!!editingExpense}
         onHide={() => setEditingExpense(null)}
@@ -544,7 +511,7 @@ export default function ExpenseManagement() {
         </Modal.Body>
       </Modal>
 
-      {/* Add Expense Modal */}
+      {/* Add Modal */}
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>
         <Modal.Header closeButton>
           <Modal.Title>Add New Expense</Modal.Title>

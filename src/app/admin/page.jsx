@@ -14,6 +14,7 @@ import ProductTable from "./components/StockProductTable";
 import ProductFilters from "./components/StockProductFilters";
 import BatchManagement from "./components/BatchManagement";
 import IncomeManagment from "./components/IncomeManagment";
+import Expenses from "./components/expensesData";
 
 // Expense system
 import ExpenseManagement from "./components/ExpensesManagment";
@@ -121,7 +122,7 @@ export default function AdminPage() {
         return <BatchManagement products={products} />;
 
       case "expense":
-        return <ExpenseManagement products={products} />;
+        return <ExpenseManagement Expenses={Expenses} />;
 
       case "income":
         return <IncomeManagment products={products}/>;

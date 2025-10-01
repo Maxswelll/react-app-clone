@@ -215,6 +215,90 @@ const products = [
     image:
       "https://res.cloudinary.com/dpcmqdi4w/image/upload/v1758612161/products/dyru5y5yddbouxv8lujg.jpg",
   },
+  {
+    id: 19,
+    name: "Shirt 4",
+    type: "shirt",
+    price: 10.1,
+    salePrice: 8.9,
+    discount: "18% OFF",
+    inStock: false,
+    sizes: [],
+    image:
+      "https://res.cloudinary.com/dpcmqdi4w/image/upload/v1756114647/products/azuk93umgowx1pb1fetn.jpg",
+  },
+  {
+    id: 20,
+    name: "Shirt",
+    type: "Shirt",
+    price: 5.777,
+    salePrice: 4.1,
+    discount: "18% OFF",
+    inStock: true,
+    sizes: ["34", "67", "123"],
+    image:
+      "https://res.cloudinary.com/dpcmqdi4w/image/upload/v1758637013/products/cjaq8hu6xdjorukff0bi.jpg",
+  },
+  {
+    id: 21,
+    name: "Dress 18",
+    type: "dress",
+    price: 6.7,
+    salePrice: 4.99,
+    discount: "18% OFF",
+    inStock: true,
+    sizes: ["73", "80", "90"],
+    image:
+      "https://res.cloudinary.com/dpcmqdi4w/image/upload/v1758612161/products/dyru5y5yddbouxv8lujg.jpg",
+  },
+  {
+    id: 22,
+    name: "Dress 18",
+    type: "dress",
+    price: 6.7,
+    salePrice: 4.99,
+    discount: "18% OFF",
+    inStock: true,
+    sizes: ["73", "80", "90"],
+    image:
+      "https://res.cloudinary.com/dpcmqdi4w/image/upload/v1758612161/products/dyru5y5yddbouxv8lujg.jpg",
+  },
+  {
+    id: 23,
+    name: "Dress 18",
+    type: "dress",
+    price: 6.7,
+    salePrice: 4.99,
+    discount: "18% OFF",
+    inStock: true,
+    sizes: ["73", "80", "90"],
+    image:
+      "https://res.cloudinary.com/dpcmqdi4w/image/upload/v1758612161/products/dyru5y5yddbouxv8lujg.jpg",
+  },
+  {
+    id: 24,
+    name: "Dress 18",
+    type: "dress",
+    price: 6.7,
+    salePrice: 4.99,
+    discount: "18% OFF",
+    inStock: true,
+    sizes: ["73", "80", "90"],
+    image:
+      "https://res.cloudinary.com/dpcmqdi4w/image/upload/v1758612161/products/dyru5y5yddbouxv8lujg.jpg",
+  },
+  {
+    id: 25,
+    name: "Dress 18",
+    type: "dress",
+    price: 6.7,
+    salePrice: 4.99,
+    discount: "18% OFF",
+    inStock: true,
+    sizes: ["73", "80", "90"],
+    image:
+      "https://res.cloudinary.com/dpcmqdi4w/image/upload/v1758612161/products/dyru5y5yddbouxv8lujg.jpg",
+  },
 ];
 
 export default products;

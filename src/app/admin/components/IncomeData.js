@@ -146,5 +146,19 @@ const initialData = [
     total: 12.5,
     date: "2024-09-30",
   },
+  {
+    id: 22,
+    customer: "Soun Ramsey",
+    quantity: 3,
+    total: 19.8,
+    date: "2024-09-12",
+  },
+  {
+    id: 23,
+    customer: "Elen Nguyen",
+    quantity: 2,
+    total: 13.29,
+    date: "2024-09-10",
+  },
 ];
 export default initialData;

@@ -1,4 +1,4 @@
-const products = [
+const StockProducts = [
   {
     id: 1,
     name: "Dress",
@@ -245,148 +245,18 @@ const products = [
     image:
       "https://res.cloudinary.com/dpcmqdi4w/image/upload/v1756114378/products/mhkqtrs9cekkk4dbqen0.jpg",
   },
-];
-export default products;
-
-export const initialExpenses = [
-  {
-    id: 1,
-    type: "boost page",
-    price: 5.0,
-    description: "Facebook ads",
-    date: "2024-01-14",
-  },
-  {
-    id: 2,
-    type: "product purchase",
-    price: 200.0,
-    description: "Supplier A",
-    date: "2024-01-18",
-  },
-  {
-    id: 3,
-    type: "other",
-    price: 50.0,
-    description: "Transport fee",
-    date: "2024-01-20",
-  },
-  {
-    id: 4,
-    type: "shit",
-    price: 50.0,
-    description: "Transport fee",
-    date: "2024-01-20",
-  },
-  {
-    id: 5,
-    type: "boost page",
-    price: 5.0,
-    description: "Facebook ads",
-    date: "2024-01-14",
-  },
-  {
-    id: 6,
-    type: "product purchase",
-    price: 200.0,
-    description: "Supplier A",
-    date: "2024-01-18",
-  },
-  {
-    id: 7,
-    type: "other",
-    price: 50.0,
-    description: "Transport fee",
-    date: "2024-01-20",
-  },
-  {
-    id: 8,
-    type: "shit",
-    price: 50.0,
-    description: "Transport fee",
-    date: "2024-01-20",
-  },
-  {
-    id: 9,
-    type: "boost page",
-    price: 5.0,
-    description: "Facebook ads",
-    date: "2024-01-14",
-  },
-  {
-    id: 10,
-    type: "product purchase",
-    price: 200.0,
-    description: "Supplier A",
-    date: "2024-01-18",
-  },
-  {
-    id: 11,
-    type: "other",
-    price: 50.0,
-    description: "Transport fee",
-    date: "2024-01-20",
-  },
-  {
-    id: 12,
-    type: "shit",
-    price: 50.0,
-    description: "Transport fee",
-    date: "2024-01-20",
-  },
-  {
-    id: 13,
-    type: "boost page",
-    price: 5.0,
-    description: "Facebook ads",
-    date: "2024-01-14",
-  },
-  {
-    id: 14,
-    type: "product purchase",
-    price: 200.0,
-    description: "Supplier A",
-    date: "2024-01-18",
-  },
-  {
-    id: 15,
-    type: "other",
-    price: 50.0,
-    description: "Transport fee",
-    date: "2024-01-20",
-  },
-  {
-    id: 16,
-    type: "shit",
-    price: 50.0,
-    description: "Transport fee",
-    date: "2024-01-20",
-  },
-  {
-    id: 17,
-    type: "boost page",
-    price: 5.0,
-    description: "Facebook ads",
-    date: "2024-01-14",
-  },
-  {
-    id: 18,
-    type: "product purchase",
-    price: 20.0,
-    description: "Supplier A",
-    date: "2024-01-18",
-  },
   {
     id: 19,
-    type: "other",
-    price: 500.0,
-    description: "Transport fee",
-    date: "2024-01-20",
-  },
-  {
-    id: 20,
-    type: "shit",
-    price: 50.0,
-    description: "Transport fee",
-    date: "2024-01-20",
+    name: "Baby Suit",
+    buyPrice: 6.0,
+    sellPrice: 8.0,
+    Price: 4.5,
+    Size: "6-9 / 9-11 / 11-13kg",
+    stock: 5,
+    status: "In Stock",
+    type: "dress",
+    image:
+      "https://res.cloudinary.com/dpcmqdi4w/image/upload/v1756114378/products/mhkqtrs9cekkk4dbqen0.jpg",
   },
 ];
+export default StockProducts;
