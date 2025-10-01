@@ -6,23 +6,31 @@ export default function ProductToolbar({
   onEditProduct,
   editingProduct,
   setEditingProduct,
+  refreshProducts, // ✅ receive fetchProducts from parent
 }) {
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
-    id: null,
     name: "",
     type: "dress",
     buyPrice: "",
     sellPrice: "",
     stock: "",
     status: "In Stock",
-    image: null,
+    image: null, // file (not bound to value)
   });
 
-  // Fill form if editing
+  // 🟢 Prefill form when editing
   useEffect(() => {
     if (editingProduct) {
-      setFormData(editingProduct);
+      setFormData({
+        name: editingProduct.name || "",
+        type: editingProduct.type || "dress",
+        buyPrice: editingProduct.buyPrice?.toString() || "",
+        sellPrice: editingProduct.sellPrice?.toString() || "",
+        stock: editingProduct.stock?.toString() || "",
+        status: editingProduct.status || "In Stock",
+        image: null, // reset file input
+      });
       setShowForm(true);
     }
   }, [editingProduct]);
@@ -31,84 +39,70 @@ export default function ProductToolbar({
     const { name, value, files } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: files ? files[0] : value,
+      [name]: files ? files[0] : value, // file or normal text
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const productData = {
       ...formData,
-      id: formData.id || Date.now(),
       buyPrice: Number(formData.buyPrice),
       sellPrice: Number(formData.sellPrice),
       stock: Number(formData.stock),
-      image: formData.image
-        ? typeof formData.image === "string"
-          ? formData.image
-          : URL.createObjectURL(formData.image)
-        : "https://via.placeholder.com/48",
+      image:
+        formData.image && typeof formData.image !== "string"
+          ? URL.createObjectURL(formData.image)
+          : formData.image || "https://via.placeholder.com/48",
     };
 
-    if (formData.id) {
-      onEditProduct(productData);
-    } else {
-      onAddProduct(productData);
-    }
+    try {
+      if (editingProduct) {
+        await onEditProduct(productData);
+      } else {
+        await onAddProduct(productData);
+      }
 
-    // Reset
-    setFormData({
-      id: null,
-      name: "",
-      type: "dress",
-      buyPrice: "",
-      sellPrice: "",
-      stock: "",
-      status: "In Stock",
-      image: null,
-    });
-    setShowForm(false);
-    setEditingProduct(null);
+      if (refreshProducts) refreshProducts();
+
+      // Reset form
+      setFormData({
+        name: "",
+        type: "dress",
+        buyPrice: "",
+        sellPrice: "",
+        stock: "",
+        status: "In Stock",
+        image: null,
+      });
+      setShowForm(false);
+      setEditingProduct(null);
+    } catch (err) {
+      console.error("Error saving product:", err);
+    }
   };
 
   return (
-    <div className="d-flex gap-3 mb-3 flex-wrap">
+    <div className="container mt-4">
       <button
         onClick={() => setShowForm(true)}
-        className="btn btn-success"
-        disabled={!!editingProduct}
-        style={{
-          background: "linear-gradient( 135deg, #48bb78, #38a169)",
-          fontWeight: "600",
-          boxShadow: "0 4px 12px #48bb784d",
-          transition: "all .3s ease",
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = "translateY(-3px) scale(1.05)";
-          e.currentTarget.style.boxShadow = "0 6px 15px rgba(0,0,0,0.2)";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = "none";
-          e.currentTarget.style.boxShadow = "0 3px 6px rgba(0,0,0,0.1)";
-        }}
+        className="btn btn-success mb-3"
       >
         + Add New Product
       </button>
 
-      {/* Bootstrap Modal */}
       {showForm && (
         <div
           className="modal d-block"
-          tabIndex="-1"
           style={{ background: "rgba(0,0,0,0.5)" }}
         >
-          <div className="modal-dialog modal-dialog-centered modal-lg modal-fullscreen-sm-down">
+          <div className="modal-dialog modal-lg modal-dialog-centered">
             <div className="modal-content">
               <form onSubmit={handleSubmit}>
                 <div className="modal-header">
                   <h5 className="modal-title">
-                    {formData.id ? "Edit Product" : "Add Product"}
+                    {editingProduct ? "Edit Product" : "Add Product"}
                   </h5>
                   <button
                     type="button"
@@ -117,96 +111,72 @@ export default function ProductToolbar({
                       setShowForm(false);
                       setEditingProduct(null);
                     }}
-                  ></button>
+                  />
                 </div>
 
                 <div className="modal-body">
-                  <div className="row g-3">
-                    <div className="col-md-6">
-                      <label className="form-label">Name</label>
-                      <input
-                        name="name"
-                        value={formData.name}
-                        onChange={handleChange}
-                        className="form-control"
-                        required
-                      />
-                    </div>
+                  {/* Product Name */}
+                  <input
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="Product Name"
+                    className="form-control mb-2"
+                    required
+                  />
 
-                    <div className="col-md-6">
-                      <label className="form-label">Type</label>
-                      <select
-                        name="type"
-                        value={formData.type}
-                        onChange={handleChange}
-                        className="form-select"
-                      >
-                        <option value="dress">Dress</option>
-                        <option value="shirt">Shirt</option>
-                        <option value="baby suit">Baby Suit</option>
-                      </select>
-                    </div>
+                  {/* Buy Price */}
+                  <input
+                    type="number"
+                    name="buyPrice"
+                    value={formData.buyPrice}
+                    onChange={handleChange}
+                    placeholder="Buy Price"
+                    className="form-control mb-2"
+                    required
+                  />
 
-                    <div className="col-md-6">
-                      <label className="form-label">Buy Price</label>
-                      <input
-                        type="number"
-                        name="buyPrice"
-                        value={formData.buyPrice}
-                        onChange={handleChange}
-                        className="form-control"
-                        required
-                      />
-                    </div>
+                  {/* Sell Price */}
+                  <input
+                    type="number"
+                    name="sellPrice"
+                    value={formData.sellPrice}
+                    onChange={handleChange}
+                    placeholder="Sell Price"
+                    className="form-control mb-2"
+                    required
+                  />
 
-                    <div className="col-md-6">
-                      <label className="form-label">Sell Price</label>
-                      <input
-                        type="number"
-                        name="sellPrice"
-                        value={formData.sellPrice}
-                        onChange={handleChange}
-                        className="form-control"
-                        required
-                      />
-                    </div>
+                  {/* Stock */}
+                  <input
+                    type="number"
+                    name="stock"
+                    value={formData.stock}
+                    onChange={handleChange}
+                    placeholder="Stock"
+                    className="form-control mb-2"
+                    required
+                  />
 
-                    <div className="col-md-6">
-                      <label className="form-label">Stock</label>
-                      <input
-                        type="number"
-                        name="stock"
-                        value={formData.stock}
-                        onChange={handleChange}
-                        className="form-control"
-                        required
-                      />
-                    </div>
+                  {/* Status */}
+                  <select
+                    name="status"
+                    value={formData.status}
+                    onChange={handleChange}
+                    className="form-select mb-2"
+                  >
+                    <option>In Stock</option>
+                    <option>Out of Stock</option>
+                  </select>
 
-                    <div className="col-md-6">
-                      <label className="form-label">Status</label>
-                      <select
-                        name="status"
-                        value={formData.status}
-                        onChange={handleChange}
-                        className="form-select"
-                      >
-                        <option>In Stock</option>
-                        <option>Out of Stock</option>
-                      </select>
-                    </div>
-
-                    <div className="col-12">
-                      <label className="form-label">Image</label>
-                      <input
-                        type="file"
-                        name="image"
-                        onChange={handleChange}
-                        className="form-control"
-                        accept="image/*"
-                      />
-                    </div>
-                  </div>
+                  {/* Image File */}
+                  <input
+                    type="file"
+                    name="image"
+                    accept="image/*"
+                    onChange={handleChange}
+                    className="form-control mb-2"
+                  />
                 </div>
 
                 <div className="modal-footer">
@@ -221,7 +191,7 @@ export default function ProductToolbar({
                     Cancel
                   </button>
                   <button type="submit" className="btn btn-success">
-                    {formData.id ? "Update" : "Save"}
+                    {editingProduct ? "Update" : "Save"}
                   </button>
                 </div>
               </form>

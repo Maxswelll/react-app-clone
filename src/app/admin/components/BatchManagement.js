@@ -3,6 +3,7 @@ import { useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Pagination from "./StockPagination";
 import { AiOutlineDollarCircle } from "react-icons/ai";
+import StockProducts from "./StockProducts";
 
 export default function BatchManagement({ products }) {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
@@ -21,7 +22,7 @@ export default function BatchManagement({ products }) {
   };
 
   // --- Sorting Logic ---
-  const sortedProducts = [...products].sort((a, b) => {
+  const sortedProducts = [...StockProducts].sort((a, b) => {
     let valA, valB;
 
     if (sortConfig.key === "size") {

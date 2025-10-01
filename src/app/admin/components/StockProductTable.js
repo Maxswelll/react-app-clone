@@ -102,7 +102,7 @@ export default function ProductTable({
                 />
               </td>
               <td className="fw-medium">{p.type}</td>
-              <td>${p.buyPrice.toFixed(2)}</td>
+              <td>${Number(p.buy_price || p.buyPrice || 0).toFixed(2)}</td>
               <td>
                 <span
                   style={{
@@ -110,10 +110,10 @@ export default function ProductTable({
                   }}
                   className="fw-semibold"
                 >
-                  ${p.sellPrice.toFixed(2)}
+                  ${Number(p.sell_price || p.sellPrice || 0).toFixed(2)}
                 </span>
               </td>
-              <td>{p.stock}</td>
+              <td>{p.stock || 0}</td>
 
               {/* custom stock colors */}
               <td>
