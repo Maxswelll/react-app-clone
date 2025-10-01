@@ -12,100 +12,17 @@ import {
 import { motion } from "framer-motion";
 import { CiEdit } from "react-icons/ci";
 import { AiOutlineDelete } from "react-icons/ai";
-import { BsCurrencyDollar, BsPeople, BsBag, BsGraphUp } from "react-icons/bs";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { AiOutlineDollarCircle } from "react-icons/ai";
+import { BsPeople } from "react-icons/bs";
+import { AiOutlineArrowUp, AiOutlineArrowDown } from "react-icons/ai";
+import initialData from "./IncomeData";
 
-const initialData = [
-  {
-    id: 1,
-    customer: "Jane Moum",
-    quantity: 7,
-    total: 23.0,
-    date: "2024-08-15",
-  },
-  {
-    id: 2,
-    customer: "Teh Channakara",
-    quantity: 3,
-    total: 11.75,
-    date: "2024-07-06",
-  },
-  {
-    id: 3,
-    customer: "Solinda",
-    quantity: 2,
-    total: 12.59,
-    date: "2024-09-11",
-  },
-  {
-    id: 4,
-    customer: "Nary Nary",
-    quantity: 1,
-    total: 16.5,
-    date: "2024-09-14",
-  },
-  {
-    id: 5,
-    customer: "Ri Va",
-    quantity: 4,
-    total: 20.5,
-    date: "2024-08-15",
-  },
-  {
-    id: 6,
-    customer: "Vothey Lim",
-    quantity: 1,
-    total: 20.2,
-    date: "2024-09-14",
-  },
-  {
-    id: 7,
-    customer: "Ah Ny",
-    quantity: 2,
-    total: 10.0,
-    date: "2024-09-13",
-  },
-  {
-    id: 8,
-    customer: "Soun Ramsey",
-    quantity: 3,
-    total: 19.8,
-    date: "2024-09-12",
-  },
-  {
-    id: 9,
-    customer: "Elen Nguyen",
-    quantity: 2,
-    total: 13.29,
-    date: "2024-09-10",
-  },
-  {
-    id: 10,
-    customer: "Chakriya Chhay",
-    quantity: 1,
-    total: 14.52,
-    date: "2024-09-10",
-  },
-  {
-    id: 11,
-    customer: "Panha",
-    quantity: 3,
-    total: 45.0,
-    date: "2024-09-30",
-  },
-  {
-    id: 12,
-    customer: "Panha",
-    quantity: 1,
-    total: 12.5,
-    date: "2024-09-30",
-  },
-];
 // Uppercase profile name with logic
 function initials(name = "") {
   const parts = name.split(" ").filter(Boolean);
   if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0].slice(0, 3).toUpperCase();
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[1][0]).toUpperCase();
 }
 // return linear-gradient bg color random
@@ -157,10 +74,6 @@ export default function IncomeManagement() {
       .filter((r) => r.customer.toLowerCase().includes("boost"))
       .reduce((s, r) => s + Number(r.total || 0), 0);
 
-    const todayStr = new Date().toISOString().split("T")[0]; // "YYYY-MM-DD"
-    const todayIncome = data
-      .filter((r) => r.date === todayStr)
-      .reduce((s, r) => s + Number(r.total || 0), 0);
     const panhaIncome = data
       .filter((r) => r.customer.toLowerCase() === "panha")
       .reduce((s, r) => s + Number(r.total || 0), 0);
@@ -273,12 +186,20 @@ export default function IncomeManagement() {
   return (
     <Container fluid className="p-3">
       {/* Title */}
-      <div className="text-center mb-3">
-        <h2 className="mb-0" style={{ color: "#0d6efd", fontWeight: 700 }}>
-          <BsCurrencyDollar style={{ marginRight: 8 }} />
+      <div className="text-center text-info mb-3">
+        <h2 className="mb-0 ms-2">
+          <AiOutlineDollarCircle
+            style={{ marginRight: "8px", color: "#000" }}
+            size={35}
+          />
           Income Management
         </h2>
-        <small className="text-muted">
+        <small
+          style={{
+            fontSize: "15px",
+          }}
+          className="text-muted"
+        >
           Track and manage all revenue streams
         </small>
       </div>
@@ -288,53 +209,56 @@ export default function IncomeManagement() {
         {[
           {
             id: "panha",
-            icon: <BsCurrencyDollar size={20} />,
+            icon: <AiOutlineDollarCircle size={35} />,
             value: `$${totals.panhaIncome.toFixed(2)}`,
             label: "Panha ",
-            color: "linear-gradient(135deg,#74b9ff,#4d7cff)",
+            color:
+              "linear-gradient(135deg, rgb(79, 172, 254), rgb(0, 242, 254))",
           },
 
           {
             id: "chenda",
-            icon: <BsGraphUp size={20} />,
+            icon: <AiOutlineDollarCircle size={35} />,
             value: `$${totals.productIncome.toFixed(2)}`,
             label: "Chenda",
-            color: "linear-gradient(135deg,#9b8cff,#7a6bff)",
+            color:
+              "linear-gradient(135deg, rgb(79, 172, 254), rgb(0, 242, 254))",
           },
           {
             id: "total",
-            icon: <BsBag size={20} />,
+            icon: <AiOutlineDollarCircle size={35} />,
             value: `$${totals.totalIncome.toFixed(2)}`,
             label: "Total Income",
-            color: "linear-gradient(135deg,#56ab2f,#a8e063)",
+            color:
+              "linear-gradient(135deg, rgb(79, 172, 254), rgb(0, 242, 254))",
           },
 
           {
             id: "customers",
-            icon: <BsPeople size={20} />,
+            icon: <BsPeople size={35} />,
             value: `${totals.customers}`,
             label: "Total Customers",
-            color: "linear-gradient(135deg,#67d1ff,#47aef8)",
+            color: "linear-gradient(135deg, #a8edea, #fed6e3)",
           },
         ].map((c) => (
           <Col xs={12} sm={6} md={3} key={c.id}>
             <motion.div
-              whileHover={{ y: -6 }}
-              className="d-flex align-items-center bg-white rounded-3 p-3 shadow-sm"
-              style={{ gap: 12 }}
+              whileHover={{ y: -3 }}
+              className="d-flex align-items-center bg-white rounded-4 p-3 shadow-sm"
+              style={{ gap: 15 }}
             >
               <div
                 className="rounded-3 text-white d-flex align-items-center justify-content-center"
                 style={{
-                  width: 56,
-                  height: 56,
+                  width: 70,
+                  height: 70,
                   background: c.color,
                 }}
               >
                 {c.icon}
               </div>
               <div>
-                <div style={{ fontWeight: 700, fontSize: 18 }}>{c.value}</div>
+                <div style={{ fontWeight: 700, fontSize: 27 }}>{c.value}</div>
                 <div className="text-muted">{c.label}</div>
               </div>
             </motion.div>
@@ -343,40 +267,34 @@ export default function IncomeManagement() {
       </Row>
 
       {/* Add bar */}
-      <div className="bg-white rounded-3 shadow-sm p-3 mb-3 d-flex flex-column flex-md-row align-items-center justify-content-between gap-2">
-        <div className="d-flex gap-2 align-items-center w-100 w-md-auto">
-          <Button variant="primary" onClick={openAdd}>
-            + Add Income
-          </Button>
-
-          <Form.Control
-            placeholder="Search customer..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setCurrentPage(1);
-            }}
-            style={{ minWidth: 200 }}
-            className="d-none d-md-block"
-          />
-        </div>
-
-        <div className="d-flex gap-2 align-items-center w-100 justify-content-md-end">
-          <Form.Control
-            type={filterDate ? "date" : "text"}
-            value={filterDate}
-            placeholder="Filter by date"
-            onFocus={(e) => (e.target.type = "date")}
-            onBlur={(e) => {
-              if (!filterDate) e.target.type = "text";
-            }}
-            onChange={(e) => {
-              setFilterDate(e.target.value);
-              setCurrentPage(1);
-            }}
-            style={{ maxWidth: 180 }}
-          />
-        </div>
+      <div className="bg-white rounded-3 shadow-sm p-3 mb-3 d-flex justify-content-start">
+        <Button
+          variant="primary"
+          onClick={openAdd}
+          className="px-4 py-2 fw-semibold shadow-sm"
+          style={{
+            background: "linear-gradient(to right, #00d2ff, #3a7bd5)",
+            border: "none",
+            borderRadius: "8px",
+            transition: "all 0.3s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "translateY(-3px) scale(1.05)";
+            e.currentTarget.style.boxShadow = "0 6px 15px rgba(0,0,0,0.2)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "none";
+            e.currentTarget.style.boxShadow = "0 3px 6px rgba(0,0,0,0.1)";
+          }}
+          onBlur={(e) => {
+            e.target.style.border = "1px solid black";
+          }}
+          onFocus={(e) => {
+            e.target.style.border = "none";
+          }}
+        >
+          + Add Income
+        </Button>
       </div>
 
       {/* Table */}
@@ -385,41 +303,71 @@ export default function IncomeManagement() {
           <table className="table align-middle mb-0">
             <thead className="table-light">
               <tr>
-                <th>Customer</th>
                 <th
-                  style={{ cursor: "pointer" }}
+                  style={{
+                    color: "#344767",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  Customer
+                </th>
+                <th
+                  style={{
+                    color: "#344767",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
                   onClick={() => toggleSort("quantity")}
                 >
                   Quantity{" "}
-                  {sortConfig.key === "quantity"
-                    ? sortConfig.dir === "asc"
-                      ? "▲"
-                      : "▼"
-                    : ""}
+                  {sortConfig.key === "quantity" &&
+                    (sortConfig.dir === "asc" ? (
+                      <AiOutlineArrowUp size={14} />
+                    ) : (
+                      <AiOutlineArrowDown size={14} />
+                    ))}
                 </th>
+
                 <th
-                  style={{ cursor: "pointer" }}
+                  style={{
+                    color: "#344767",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
                   onClick={() => toggleSort("total")}
                 >
                   Total Amount{" "}
-                  {sortConfig.key === "total"
-                    ? sortConfig.dir === "asc"
-                      ? "▲"
-                      : "▼"
-                    : ""}
+                  {sortConfig.key === "total" &&
+                    (sortConfig.dir === "asc" ? (
+                      <AiOutlineArrowUp size={14} />
+                    ) : (
+                      <AiOutlineArrowDown size={14} />
+                    ))}
                 </th>
                 <th
-                  style={{ cursor: "pointer" }}
+                  style={{
+                    color: "#344767",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
                   onClick={() => toggleSort("date")}
                 >
                   Buy Date{" "}
-                  {sortConfig.key === "date"
-                    ? sortConfig.dir === "asc"
-                      ? "▲"
-                      : "▼"
-                    : ""}
+                  {sortConfig.key === "date" &&
+                    (sortConfig.dir === "asc" ? (
+                      <AiOutlineArrowUp size={14} />
+                    ) : (
+                      <AiOutlineArrowDown size={14} />
+                    ))}
                 </th>
-                <th className="text-end">Actions</th>
+
+                <th
+                  className="text-end"
+                  style={{ fontWeight: 600, color: "#344767" }}
+                >
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -433,13 +381,13 @@ export default function IncomeManagement() {
                           width: 40,
                           height: 40,
                           background: colorFromString(r.customer),
-                          fontWeight: 700,
+                          fontWeight: 300,
                         }}
                       >
                         {initials(r.customer)}
                       </div>
                       <div>
-                        <div style={{ fontWeight: 600 }}>{r.customer}</div>
+                        <div style={{ fontWeight: 500 }}>{r.customer}</div>
                         <div className="text-muted" style={{ fontSize: 12 }}>
                           {/* optional subtitle */}
                         </div>
@@ -450,11 +398,13 @@ export default function IncomeManagement() {
                   <td>
                     <Button
                       size="sm"
-                      variant="outline-primary"
                       style={{
-                        borderRadius: 999,
-                        padding: ".25rem .6rem",
-                        fontWeight: 600,
+                        color: "#0958d9",
+                        background: "#e6f4ff",
+                        border: "2px solid #91caff",
+                        fontWeight: "600",
+                        borderRadius: "6px",
+                        padding: ".25rem .75rem",
                       }}
                     >
                       {qtyLabel(r.quantity)}
@@ -513,6 +463,7 @@ export default function IncomeManagement() {
               <option value={5}>5 / page</option>
               <option value={10}>10 / page</option>
               <option value={20}>20 / page</option>
+              <option value={50}>50 / page</option>
             </Form.Select>
           </div>
 
@@ -593,7 +544,7 @@ export default function IncomeManagement() {
             <Form.Control
               placeholder="Go to"
               type="number"
-              min={1}
+              min={0}
               max={totalPages}
               value={goToValue}
               onChange={(e) => setGoToValue(e.target.value)}

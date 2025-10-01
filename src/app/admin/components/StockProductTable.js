@@ -13,13 +13,75 @@ export default function ProductTable({
       <table className="table align-middle table-hover text-nowrap">
         <thead className="table-light">
           <tr>
-            <th scope="col">Image</th>
-            <th scope="col">Type</th>
-            <th scope="col">Buy Price</th>
-            <th scope="col">Sell Price</th>
-            <th scope="col">Stock Qty</th>
-            <th scope="col">Status</th>
-            <th scope="col" className="text-center">
+            <th
+              style={{
+                color: "#344767",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+              scope="col"
+            >
+              Image
+            </th>
+            <th
+              style={{
+                color: "#344767",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+              scope="col"
+            >
+              Type
+            </th>
+            <th
+              style={{
+                color: "#344767",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+              scope="col"
+            >
+              Buy Price
+            </th>
+            <th
+              style={{
+                color: "#344767",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+              scope="col"
+            >
+              Sell Price
+            </th>
+            <th
+              style={{
+                color: "#344767",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+              scope="col"
+            >
+              Stock Qty
+            </th>
+            <th
+              style={{
+                color: "#344767",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+              scope="col"
+            >
+              Status
+            </th>
+            <th
+              style={{
+                color: "#344767",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+              scope="col"
+              className="text-center"
+            >
               Actions
             </th>
           </tr>
@@ -42,7 +104,14 @@ export default function ProductTable({
               <td className="fw-medium">{p.type}</td>
               <td>${p.buyPrice.toFixed(2)}</td>
               <td>
-                <span className="fw-semibold">${p.sellPrice.toFixed(2)}</span>
+                <span
+                  style={{
+                    color: "red",
+                  }}
+                  className="fw-semibold"
+                >
+                  ${p.sellPrice.toFixed(2)}
+                </span>
               </td>
               <td>{p.stock}</td>
 

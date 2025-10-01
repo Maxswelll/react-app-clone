@@ -294,10 +294,22 @@ export default function ExpenseManagement() {
         >
           <thead className="table-light">
             <tr>
-              <th>Type</th>
+              <th
+                style={{
+                  color: "#344767",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Type
+              </th>
               <th
                 onClick={() => handleSort("price")}
-                style={{ cursor: "pointer" }}
+                style={{
+                  color: "#344767",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
               >
                 Price{" "}
                 {sortConfig.key === "price" ? (
@@ -308,10 +320,22 @@ export default function ExpenseManagement() {
                   )
                 ) : null}
               </th>
-              <th>Description</th>
+              <th
+                style={{
+                  color: "#344767",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Description
+              </th>
               <th
                 onClick={() => handleSort("date")}
-                style={{ cursor: "pointer" }}
+                style={{
+                  color: "#344767",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
               >
                 Date{" "}
                 {sortConfig.key === "date" ? (
@@ -322,7 +346,15 @@ export default function ExpenseManagement() {
                   )
                 ) : null}
               </th>
-              <th>Actions</th>
+              <th
+                style={{
+                  color: "#344767",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody>

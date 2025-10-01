@@ -40,18 +40,6 @@ export default function ProductFilters({
         <option value="In Stock">In Stock</option>
         <option value="Out of Stock">Out of Stock</option>
       </select>
-
-      {/* Search Box */}
-      <input
-        type="text"
-        placeholder="Search product..."
-        className="form-control w-auto"
-        value={searchTerm}
-        onChange={(e) => {
-          setSearchTerm(e.target.value);
-          setCurrentPage(1);
-        }}
-      />
     </div>
   );
 }

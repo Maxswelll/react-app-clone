@@ -66,10 +66,12 @@ export default function BatchManagement({ products }) {
 
   return (
     <div className="container px-2 px-md-4 mt-4">
-      <h3 className="text-center text-md-start text-info">
-        <AiOutlineDollarCircle size={32} className="me-2" /> Batch Management
+      <h3 className="d-flex align-items-center justify-content-center text-info">
+        <AiOutlineDollarCircle size={35} className="me-2" color="#000" />
+        Batch Management
       </h3>
-      <p className="text-center text-md-start text-muted mb-3">
+
+      <p className="text-center text-muted mb-3 ms-3">
         To manage product for batch selling.
       </p>
 
@@ -80,23 +82,55 @@ export default function BatchManagement({ products }) {
         <table className="table table-hover align-middle">
           <thead className="table-light">
             <tr>
-              <th>Image</th>
-              <th>Price</th>
+              <th
+                style={{
+                  color: "#344767",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Image
+              </th>
+              <th
+                style={{
+                  color: "#344767",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Price
+              </th>
               {/* Hide size column on extra-small screens */}
               <th
                 className="d-none d-sm-table-cell"
-                style={{ cursor: "pointer", userSelect: "none" }}
+                style={{
+                  color: "#344767",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  userSelect: "none",
+                }}
                 onClick={() => handleSort("size")}
               >
                 Size {getArrow("size")}
               </th>
               <th
-                style={{ cursor: "pointer", userSelect: "none" }}
+                style={{
+                  color: "#344767",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  userSelect: "none",
+                }}
                 onClick={() => handleSort("stock")}
               >
                 Stock Qty {getArrow("stock")}
               </th>
-              <th>
+              <th
+                style={{
+                  color: "#344767",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
                 Status{" "}
                 <select
                   className="form-select form-select-sm d-inline w-auto ms-2"

@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { IoMdLogOut } from "react-icons/io";
-import { SiPhpmyadmin } from "react-icons/si";
+import { IoSpeedometerOutline } from "react-icons/io5";
 
 export default function Log() {
   const router = useRouter();
@@ -22,22 +22,20 @@ export default function Log() {
     >
       {/* Admin Button */}
       <button
-        className="btn btn-primary rounded-4"
+        className="btn btn-primary rounded-3"
         onClick={handleAdmin}
         style={{ padding: "7px" }}
       >
-        <SiPhpmyadmin size={20} />
-        Admin
+        <IoSpeedometerOutline size={20} /> Admin
       </button>
 
       {/* Logout Button */}
       <button
-        className="btn btn-outline-danger rounded-4"
+        className="btn btn-outline-danger rounded-3"
         onClick={handleLogout}
         style={{ padding: "7px" }}
       >
-        <IoMdLogOut size={20} />
-        Logout
+        <IoMdLogOut size={20} /> Logout
       </button>
     </div>
   );

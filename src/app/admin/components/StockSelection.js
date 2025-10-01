@@ -78,6 +78,20 @@ export default function ProductToolbar({
         onClick={() => setShowForm(true)}
         className="btn btn-success"
         disabled={!!editingProduct}
+        style={{
+          background: "linear-gradient( 135deg, #48bb78, #38a169)",
+          fontWeight: "600",
+          boxShadow: "0 4px 12px #48bb784d",
+          transition: "all .3s ease",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = "translateY(-3px) scale(1.05)";
+          e.currentTarget.style.boxShadow = "0 6px 15px rgba(0,0,0,0.2)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = "none";
+          e.currentTarget.style.boxShadow = "0 3px 6px rgba(0,0,0,0.1)";
+        }}
       >
         + Add New Product
       </button>
