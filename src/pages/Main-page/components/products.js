@@ -1,40 +1,28 @@
 "use client";
 import { useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
-import products from "../items";
+import products from "../../../app/admin/components/items";
 import Filters from "./filter";
 import Footer from "./footer";
 
 export default function Products() {
   const [index, setIndex] = useState(null);
 
-  // ✅ store filters from Filters.js
   const [filters, setFilters] = useState({
     type: "",
-    size: "",
     stock: "",
     search: "",
   });
 
-  const { type, size, stock, search } = filters;
+  const { type, stock, search } = filters;
 
-  // ✅ Single Filtering logic
   const filteredProducts = products.filter((p) => {
-    // search by name
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
-
-    // filter by type
     const matchType = type ? p.type === type : true;
-
-    // filter by size
-    const matchSize = size ? p.sizes.includes(size) : true;
-
-    // filter by stock
     let matchStock = true;
-    if (stock === "in") matchStock = p.inStock;
-    if (stock === "out") matchStock = !p.inStock;
-
-    return matchSearch && matchType && matchSize && matchStock;
+    if (stock === "in") matchStock = p.stock > 0;
+    if (stock === "out") matchStock = p.stock === 0;
+    return matchSearch && matchType && matchStock;
   });
 
   const handleNext = () =>
@@ -46,27 +34,26 @@ export default function Products() {
     boxShadow: "0 2px 8px #0000000f",
     cursor: "pointer",
     borderRadius: "16px",
-    height: "118px",
+    height: "150px",
     display: "flex",
     flexDirection: "row",
-    padding: "4px",
+    padding: "8px",
     transition: "all .3s ease",
   };
 
   const imgStyle = {
-    width: "170px",
-    height: "110px",
+    width: "150px",
+    height: "130px",
     objectFit: "cover",
-    borderRadius: "16px",
-    transition: "transform .3s ease-in-out",
+    borderRadius: "12px",
   };
 
   const badgeStyle = (inStock) => ({
     display: "inline-block",
-    padding: "4px 12px",
+    padding: "4px 10px",
     borderRadius: "8px",
     fontSize: "0.75rem",
-    fontWeight: "normal",
+    fontWeight: "bold",
     color: inStock ? "#fff" : "#c53030",
     background: inStock
       ? "linear-gradient(135deg, #48bb78, #68d391)"
@@ -86,10 +73,9 @@ export default function Products() {
 
   return (
     <div className="container py-4">
-      {/* ✅ Filters Section */}
+      {/* Filters */}
       <Filters filters={filters} setFilters={setFilters} />
 
-      {/* ✅ Products Section */}
       <div className="row g-3 mt-3">
         {filteredProducts.length === 0 ? (
           <div className="text-center py-5 text-muted">
@@ -113,8 +99,8 @@ export default function Products() {
                   e.currentTarget.style.transform = "translateY(0)";
                 }}
               >
-                {/* Image */}
-                <div style={{ flex: "0 0 200px" }}>
+                {/* Product Image */}
+                <div>
                   <img
                     src={product.image}
                     alt={product.name}
@@ -122,14 +108,14 @@ export default function Products() {
                   />
                 </div>
 
-                {/* Info */}
+                {/* Product Info */}
                 <div style={{ marginLeft: "12px", flex: 1 }}>
                   {/* Stock Badge */}
-                  <span style={badgeStyle(product.inStock)}>
-                    {product.inStock ? "IN STOCK" : "OUT OF STOCK"}
+                  <span style={badgeStyle(product.stock > 0)}>
+                    {product.stock > 0 ? "IN STOCK" : "OUT OF STOCK"}
                   </span>
 
-                  {/* Sizes */}
+                  {/* ✅ Show Sizes */}
                   <p
                     style={{
                       margin: "6px 0",
@@ -150,16 +136,16 @@ export default function Products() {
                     </span>
                   </p>
 
-                  {/* Price Section */}
-                  <div style={{ marginTop: "4px" }}>
+                  {/* Price + Discount */}
+                  <div>
                     <span
                       style={{
                         color: "#dc3545",
                         fontWeight: "bold",
-                        fontSize: "1.1rem",
+                        fontSize: "1rem",
                       }}
                     >
-                      ${product.salePrice.toFixed(2)}
+                      ${product.sell_price.toFixed(2)}
                     </span>
                     <span
                       style={{
@@ -169,7 +155,7 @@ export default function Products() {
                         fontSize: "0.9rem",
                       }}
                     >
-                      ${product.price.toFixed(2)}
+                      ${product.buy_price.toFixed(2)}
                     </span>
                     <span style={discountStyle}>{product.discount}</span>
                   </div>
@@ -179,21 +165,18 @@ export default function Products() {
           ))
         )}
 
-        {/* ✅ Footer */}
+        {/* Footer */}
         <Footer
           filteredCount={filteredProducts.length}
           totalCount={products.length}
         />
       </div>
 
-      {/* ✅ Product Popup */}
+      {/* Product Modal */}
       {index !== null && (
         <div
           className="modal fade show"
-          style={{
-            display: "block",
-            background: "rgba(0,0,0,0.6)",
-          }}
+          style={{ display: "block", background: "rgba(0,0,0,0.6)" }}
           onClick={() => setIndex(null)}
         >
           <div
@@ -201,7 +184,6 @@ export default function Products() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="modal-content border-0 rounded-4 overflow-hidden">
-              {/* Close Button */}
               <button
                 type="button"
                 className="btn-close position-absolute end-0 m-3"
@@ -210,7 +192,6 @@ export default function Products() {
               ></button>
 
               <div className="modal-body d-flex flex-column flex-lg-row p-0">
-                {/* Left: Product Image */}
                 <div
                   className="flex-fill d-flex justify-content-center align-items-center bg-light"
                   style={{ minHeight: "500px" }}
@@ -227,21 +208,12 @@ export default function Products() {
                   />
                 </div>
 
-                {/* Right: Product Info */}
                 <div className="flex-fill p-4 text-start">
-                  <span style={badgeStyle(filteredProducts[index].inStock)}>
-                    {filteredProducts[index].inStock
+                  <span style={badgeStyle(filteredProducts[index].stock > 0)}>
+                    {filteredProducts[index].stock > 0
                       ? "IN STOCK"
                       : "OUT OF STOCK"}
                   </span>
-
-                  <p style={{ marginTop: "16px" }}>
-                    <strong>Available Sizes:</strong>
-                    <br />
-                    {filteredProducts[index].sizes.length > 0
-                      ? filteredProducts[index].sizes.join(" • ")
-                      : "—"}
-                  </p>
 
                   <div className="mt-3">
                     <span
@@ -251,7 +223,7 @@ export default function Products() {
                         fontSize: "1.8rem",
                       }}
                     >
-                      ${filteredProducts[index].salePrice.toFixed(2)}
+                      ${filteredProducts[index].sell_price.toFixed(2)}
                     </span>
                     <span
                       style={{
@@ -261,14 +233,22 @@ export default function Products() {
                         fontSize: "1.1rem",
                       }}
                     >
-                      ${filteredProducts[index].price.toFixed(2)}
+                      ${filteredProducts[index].buy_price.toFixed(2)}
                     </span>
                     <span style={discountStyle}>
                       {filteredProducts[index].discount}
                     </span>
                   </div>
 
-                  {/* Navigation Buttons */}
+                  {/* Sizes in Modal */}
+                  <p style={{ marginTop: "16px" }}>
+                    <strong>Available Sizes:</strong>
+                    <br />
+                    {filteredProducts[index].sizes.length > 0
+                      ? filteredProducts[index].sizes.join(" • ")
+                      : "—"}
+                  </p>
+
                   <div className="d-flex justify-content-between mt-4">
                     <button
                       className="btn btn-outline-secondary"

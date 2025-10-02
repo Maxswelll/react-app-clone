@@ -4,11 +4,10 @@ import { IoBagHandleOutline } from "react-icons/io5";
 import { FaCheckCircle, FaExclamationCircle } from "react-icons/fa";
 import { Row, Col } from "react-bootstrap";
 
-export default function StatCards({ products }) {
+export default function ({ products }) {
   const [hovered, setHovered] = useState(null);
 
-  if (!products) return null;
-
+  // now it uses props, not static import
   const total = products.length;
   const inStock = products.filter((p) => p.status === "In Stock").length;
   const outStock = products.filter((p) => p.status === "Out of Stock").length;
@@ -52,7 +51,7 @@ export default function StatCards({ products }) {
               style={{
                 transition: "all 0.3s ease",
                 cursor: "pointer",
-                overflow: "visible", // let popup show outside
+                overflow: "visible",
                 boxShadow: isHovered
                   ? "0 12px 24px rgba(0,0,0,0.25)"
                   : "0 4px 10px rgba(0,0,0,0.15)",

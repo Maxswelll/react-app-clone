@@ -6,30 +6,27 @@ export default function ProductToolbar({
   onEditProduct,
   editingProduct,
   setEditingProduct,
-  refreshProducts, // ✅ receive fetchProducts from parent
 }) {
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
-    name: "",
     type: "dress",
-    buyPrice: "",
-    sellPrice: "",
+    buy_price: "",
+    sell_price: "",
     stock: "",
     status: "In Stock",
-    image: null, // file (not bound to value)
+    image: null,
   });
 
-  // 🟢 Prefill form when editing
+  // Pre-fill form if editing
   useEffect(() => {
     if (editingProduct) {
       setFormData({
-        name: editingProduct.name || "",
         type: editingProduct.type || "dress",
-        buyPrice: editingProduct.buyPrice?.toString() || "",
-        sellPrice: editingProduct.sellPrice?.toString() || "",
+        buy_price: editingProduct.buy_price?.toString() || "",
+        sell_price: editingProduct.sell_price?.toString() || "",
         stock: editingProduct.stock?.toString() || "",
         status: editingProduct.status || "In Stock",
-        image: null, // reset file input
+        image: null,
       });
       setShowForm(true);
     }
@@ -39,7 +36,7 @@ export default function ProductToolbar({
     const { name, value, files } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: files ? files[0] : value, // file or normal text
+      [name]: files ? files[0] : value,
     }));
   };
 
@@ -47,39 +44,59 @@ export default function ProductToolbar({
     e.preventDefault();
 
     const productData = {
-      ...formData,
-      buyPrice: Number(formData.buyPrice),
-      sellPrice: Number(formData.sellPrice),
+      name: formData.type, // you may add separate "name" later
+      type: formData.type,
+      buy_price: Number(formData.buy_price),
+      sell_price: Number(formData.sell_price),
       stock: Number(formData.stock),
+      status: formData.status,
       image:
         formData.image && typeof formData.image !== "string"
-          ? URL.createObjectURL(formData.image)
-          : formData.image || "https://via.placeholder.com/48",
+          ? URL.createObjectURL(formData.image) // preview only
+          : editingProduct?.image || "https://via.placeholder.com/48",
     };
 
     try {
+      let res;
       if (editingProduct) {
-        await onEditProduct(productData);
+        res = await fetch(
+          `http://localhost:5000/api/items/${editingProduct.id}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(productData),
+          }
+        );
       } else {
-        await onAddProduct(productData);
+        res = await fetch("http://localhost:5000/api/items", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(productData),
+        });
       }
 
-      if (refreshProducts) refreshProducts();
+      const savedProduct = await res.json();
 
-      // Reset form
+      if (editingProduct) {
+        onEditProduct(savedProduct);
+      } else {
+        onAddProduct(savedProduct);
+      }
+
+      // reset form
       setFormData({
-        name: "",
-        type: "dress",
-        buyPrice: "",
-        sellPrice: "",
+        buy_price: "",
+        sell_price: "",
         stock: "",
         status: "In Stock",
+        type: "dress",
         image: null,
       });
       setShowForm(false);
       setEditingProduct(null);
     } catch (err) {
-      console.error("Error saving product:", err);
+      console.error("Save error:", err);
+      alert("Failed to save product. Check console.");
     }
   };
 
@@ -115,39 +132,26 @@ export default function ProductToolbar({
                 </div>
 
                 <div className="modal-body">
-                  {/* Product Name */}
-                  <input
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    placeholder="Product Name"
-                    className="form-control mb-2"
-                    required
-                  />
-
-                  {/* Buy Price */}
                   <input
                     type="number"
-                    name="buyPrice"
-                    value={formData.buyPrice}
+                    name="buy_price"
+                    value={formData.buy_price}
                     onChange={handleChange}
                     placeholder="Buy Price"
                     className="form-control mb-2"
                     required
                   />
 
-                  {/* Sell Price */}
                   <input
                     type="number"
-                    name="sellPrice"
-                    value={formData.sellPrice}
+                    name="sell_price"
+                    value={formData.sell_price}
                     onChange={handleChange}
                     placeholder="Sell Price"
                     className="form-control mb-2"
                     required
                   />
 
-                  {/* Stock */}
                   <input
                     type="number"
                     name="stock"
@@ -158,18 +162,28 @@ export default function ProductToolbar({
                     required
                   />
 
-                  {/* Status */}
+                  <select
+                    name="type"
+                    value={formData.type}
+                    onChange={handleChange}
+                    className="form-select mb-2"
+                  >
+                    <option value="dress">Dress</option>
+                    <option value="shirt">Shirt</option>
+                    <option value="pants">Pants</option>
+                    <option value="shoes">Shoes</option>
+                  </select>
+
                   <select
                     name="status"
                     value={formData.status}
                     onChange={handleChange}
                     className="form-select mb-2"
                   >
-                    <option>In Stock</option>
-                    <option>Out of Stock</option>
+                    <option value="In Stock">In Stock</option>
+                    <option value="Out of Stock">Out of Stock</option>
                   </select>
 
-                  {/* Image File */}
                   <input
                     type="file"
                     name="image"
