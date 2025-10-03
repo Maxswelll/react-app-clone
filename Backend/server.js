@@ -72,22 +72,20 @@ app.post("/api/items", async (req, res) => {
     sizes,
     image,
   } = req.body;
+
   try {
     const result = await pool.query(
-      `INSERT INTO items 
-       (name, type, buy_price, sell_price, discount, stock, status, sizes, image)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *;`[
-        (name,
-        type,
-        buy_price,
-        sell_price,
-        discount,
-        stock,
-        status,
-        sizes,
-        image)
-      ]
+      `WITH next AS (
+         SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM items
+       )
+       INSERT INTO items
+       (id, name, type, buy_price, sell_price, discount, stock, status, sizes, image)
+       SELECT next_id, $1, $2, $3, $4, $5, $6, $7, $8, $9
+       FROM next
+       RETURNING *`,
+      [name, type, buy_price, sell_price, discount, stock, status, sizes, image]
     );
+
     res.json(result.rows[0]);
   } catch (err) {
     res.status(400).json({ message: err.message });
