@@ -74,6 +74,7 @@ app.get("/api/items", async (req, res) => {
   }
 });
 
+<<<<<<< HEAD:Backend/StockServer.js
 // ✅ Add product (with image upload)
 app.post("/api/items", upload.single("image"), async (req, res) => {
   const { name, type, buy_price, sell_price, discount, stock, status, sizes } =
@@ -81,6 +82,21 @@ app.post("/api/items", upload.single("image"), async (req, res) => {
 
   // ✅ Save path if file uploaded
   const imagePath = req.file ? `/uploads/${req.file.filename}` : null;
+=======
+// Add product
+app.post("/api/items", async (req, res) => {
+  const {
+    name,
+    type,
+    buy_price,
+    sell_price,
+    discount,
+    stock,
+    status,
+    sizes,
+    image,
+  } = req.body;
+>>>>>>> d0373099c7e4def1d596fce641e0ae1a4dffd797:Backend/server.js
 
   try {
     const result = await pool.query(
@@ -92,6 +108,7 @@ app.post("/api/items", upload.single("image"), async (req, res) => {
        SELECT next_id, $1, $2, $3, $4, $5, $6, $7, $8, $9
        FROM next
        RETURNING *`,
+<<<<<<< HEAD:Backend/StockServer.js
       [
         name,
         type,
@@ -103,6 +120,9 @@ app.post("/api/items", upload.single("image"), async (req, res) => {
         sizes,
         imagePath,
       ]
+=======
+      [name, type, buy_price, sell_price, discount, stock, status, sizes, image]
+>>>>>>> d0373099c7e4def1d596fce641e0ae1a4dffd797:Backend/server.js
     );
 
     res.json(result.rows[0]);
