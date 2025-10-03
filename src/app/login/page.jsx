@@ -5,35 +5,56 @@ import { VscAccount } from "react-icons/vsc";
 import { CiLock } from "react-icons/ci";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { FiEye } from "react-icons/fi";
-import { FiEyeOff } from "react-icons/fi";
-
+import { FiEye, FiEyeOff } from "react-icons/fi";
 
 export default function LoginPage() {
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
-  const[showPassword,setShowPassword]=useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  //  Show toast when redirected from logout
+  // Show toast if redirected from logout
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
-      if (params.get("logout") ==="success") {
+      if (params.get("logout") === "success") {
         toast.success("Logged out successfully!", { position: "top-center" });
       }
     }
   }, []);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
 
-    if (userId === "Admin" && password === "12345") {
-      toast.success("Login successful!", { position: "top-center" });
-      setTimeout(() => {
-        window.location.href = "/Main-page";
-      }, 1500);
-    } else {
-      toast.error("Invalid User ID or Password!", { position: "top-center" });
+    try {
+      const res = await fetch("http://localhost:5003/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: userId,
+          password: password,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        // ✅ Save token & username
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("username", userId);
+
+        toast.success("Login successful!", { position: "top-center" });
+
+        setTimeout(() => {
+          window.location.href = "/Main-page"; // redirect to dashboard
+        }, 1500);
+      } else {
+        toast.error(data.message || "Invalid User ID or Password!", {
+          position: "top-center",
+        });
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      toast.error("Server error. Try again later.", { position: "top-center" });
     }
   };
 
@@ -44,7 +65,10 @@ export default function LoginPage() {
         background: "linear-gradient(135deg, #667eea, #764ba2)",
       }}
     >
-      <div className="card shadow-lg p-4" style={{ width: "400px", borderRadius: "20px" }}>
+      <div
+        className="card shadow-lg p-4"
+        style={{ width: "400px", borderRadius: "20px" }}
+      >
         {/* Logo */}
         <div className="text-center mb-4">
           <img
@@ -74,7 +98,7 @@ export default function LoginPage() {
             </label>
             <div className="input-group">
               <span className="input-group-text bg-light">
-                <VscAccount  size={20} color="#00e9faff"/>
+                <VscAccount size={20} color="#00e9faff" />
               </span>
               <input
                 type="text"
@@ -90,14 +114,15 @@ export default function LoginPage() {
 
           <div className="mb-3">
             <label htmlFor="password" className="text-danger">
-              * <span className="form-label fw-semibold text-dark">Password</span>
+              *{" "}
+              <span className="form-label fw-semibold text-dark">Password</span>
             </label>
             <div className="input-group">
               <span className="input-group-text bg-light">
-                <CiLock  size={20} color="#00e9faff"/>
+                <CiLock size={20} color="#00e9faff" />
               </span>
               <input
-                type={showPassword ? "text":"password"}
+                type={showPassword ? "text" : "password"}
                 id="password"
                 className="form-control"
                 placeholder="Enter your password"
@@ -105,18 +130,22 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
-              <span 
-              className="input-group-text bg-light" 
-                style={{cursor: "poniter"}}
-                onClick={() =>setShowPassword(!showPassword)}
-                >
-                  {showPassword? <FiEye size={15}/>:<FiEyeOff  size={15}/>}
+              <span
+                className="input-group-text bg-light"
+                style={{ cursor: "pointer" }}
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <FiEye size={15} /> : <FiEyeOff size={15} />}
               </span>
             </div>
           </div>
 
           <div className="mb-3 form-check">
-            <input type="checkbox" className="form-check-input" id="rememberMe" />
+            <input
+              type="checkbox"
+              className="form-check-input"
+              id="rememberMe"
+            />
             <label className="form-check-label" htmlFor="rememberMe">
               Remember me
             </label>
@@ -131,11 +160,11 @@ export default function LoginPage() {
             }}
           >
             Sign In
-            </button>
+          </button>
         </form>
       </div>
 
-      {/*  Toast container */}
+      {/* Toast container */}
       <ToastContainer />
     </div>
   );

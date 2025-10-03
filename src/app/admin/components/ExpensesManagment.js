@@ -1,3 +1,4 @@
+// ExpenseManagement.jsx
 "use client";
 import React, { useState, useEffect } from "react";
 import {
@@ -21,15 +22,20 @@ import {
   BsArrowDown,
 } from "react-icons/bs";
 import ExpenseStatCards from "./ExpensesCard";
-import Expenses from "./expensesData";
+
+// ---- use correct API base for ExpensesServer ----
+const API_BASE =
+  process.env.NEXT_PUBLIC_EXPENSES_API || "http://localhost:5001";
 
 export default function ExpenseManagement() {
-  // start with no data
-  const [expenses, setExpenses] = useState(Expenses);
+  const [expenses, setExpenses] = useState([]);
   const [editingExpense, setEditingExpense] = useState(null);
   const [filterType, setFilterType] = useState("All");
   const [filterDate, setFilterDate] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
   const [newExpense, setNewExpense] = useState({
     type: "boost page",
     price: "",
@@ -37,8 +43,125 @@ export default function ExpenseManagement() {
     date: "",
   });
 
-  // Sorting
+  // sorting & pagination
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+
+  // ✅ normalize rows (simplified, no timezone shift)
+  const normalize = (row) => ({
+    ...row,
+    price: row.price != null ? String(row.price) : "",
+    date: row.date || "", // already in YYYY-MM-DD from backend
+  });
+
+  // Fetch expenses
+  const fetchExpenses = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch(`${API_BASE}/api/expenses`);
+      if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+      const data = await res.json();
+      setExpenses(data.map(normalize));
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load expenses");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchExpenses();
+  }, []);
+
+  // ✅ Add expense
+  const handleAddExpense = async (ev) => {
+    ev.preventDefault();
+    if (!newExpense.price || !newExpense.description || !newExpense.date)
+      return;
+
+    try {
+      const payload = {
+        type: newExpense.type,
+        price: parseFloat(newExpense.price),
+        description: newExpense.description,
+        date: newExpense.date, // plain YYYY-MM-DD
+      };
+
+      const res = await fetch(`${API_BASE}/api/expenses`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error("Add failed");
+      const saved = await res.json();
+      setExpenses((prev) => [...prev, normalize(saved)]);
+      setShowModal(false);
+      setNewExpense({
+        type: "boost page",
+        price: "",
+        description: "",
+        date: "",
+      });
+    } catch (err) {
+      console.error("Add error:", err);
+      setError("Failed to add expense");
+    }
+  };
+
+  // ✅ Prepare edit
+  const openEdit = (e) => {
+    setEditingExpense({ ...e, price: e.price != null ? String(e.price) : "" });
+  };
+
+  // ✅ Save edit
+  const handleSaveEdit = async (ev) => {
+    ev.preventDefault();
+    if (!editingExpense) return;
+
+    try {
+      const payload = {
+        type: editingExpense.type,
+        price: parseFloat(editingExpense.price),
+        description: editingExpense.description,
+        date: editingExpense.date, // plain YYYY-MM-DD
+      };
+
+      const res = await fetch(`${API_BASE}/api/expenses/${editingExpense.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error("Update failed");
+      const saved = await res.json();
+      setExpenses((prev) =>
+        prev.map((p) => (p.id === saved.id ? normalize(saved) : p))
+      );
+      setEditingExpense(null);
+    } catch (err) {
+      console.error("Update error:", err);
+      setError("Failed to update expense");
+    }
+  };
+
+  // ✅ Delete
+  const handleDelete = async (id) => {
+    if (!confirm("Delete this expense?")) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/expenses/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Delete failed");
+      setExpenses((prev) => prev.filter((e) => e.id !== id));
+    } catch (err) {
+      console.error("Delete error:", err);
+      setError("Failed to delete expense");
+    }
+  };
+
+  // Sorting handler
   const handleSort = (key) => {
     setSortConfig((prev) => ({
       key,
@@ -46,37 +169,11 @@ export default function ExpenseManagement() {
     }));
   };
 
-  // Pagination
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
-
-  // Delete
-  const handleDelete = (id) =>
-    setExpenses((prev) => prev.filter((e) => e.id !== id));
-
-  // Save edit
-  const handleSaveEdit = (updated) => {
-    setExpenses((prev) => prev.map((e) => (e.id === updated.id ? updated : e)));
-    setEditingExpense(null);
-  };
-
-  // Add
-  const handleAddExpense = () => {
-    if (!newExpense.price || !newExpense.description || !newExpense.date)
-      return;
-
-    setExpenses((prev) => [
-      ...prev,
-      { id: Date.now(), ...newExpense, price: parseFloat(newExpense.price) },
-    ]);
-    setShowModal(false);
-    setNewExpense({ type: "boost page", price: "", description: "", date: "" });
-  };
-
-  // Filter + Sort
+  // Filter + sort pipeline
   const filteredAndSorted = expenses
     .filter((e) => (filterType === "All" ? true : e.type === filterType))
     .filter((e) => (!filterDate ? true : e.date === filterDate))
+    .slice() // clone before sort
     .sort((a, b) => {
       if (!sortConfig.key) return 0;
       let aVal = a[sortConfig.key];
@@ -84,24 +181,28 @@ export default function ExpenseManagement() {
       if (sortConfig.key === "date") {
         aVal = new Date(aVal);
         bVal = new Date(bVal);
+      } else if (sortConfig.key === "price") {
+        aVal = parseFloat(aVal) || 0;
+        bVal = parseFloat(bVal) || 0;
       }
       if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
       if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
       return 0;
     });
 
-  // Pagination calculations
-  const totalPages = Math.ceil(filteredAndSorted.length / itemsPerPage) || 1;
+  // Pagination
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredAndSorted.length / itemsPerPage)
+  );
   const indexOfLast = currentPage * itemsPerPage;
   const indexOfFirst = indexOfLast - itemsPerPage;
   const currentExpenses = filteredAndSorted.slice(indexOfFirst, indexOfLast);
 
-  // Reset page when filters/sort change
   useEffect(() => {
     setCurrentPage(1);
   }, [filterType, filterDate, sortConfig.key, sortConfig.direction]);
 
-  // Clamp current page
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(totalPages || 1);
   }, [totalPages, currentPage]);
@@ -171,7 +272,6 @@ export default function ExpenseManagement() {
     }
   };
 
-  // Stat cards
   const cards = [
     {
       id: "total",
@@ -209,42 +309,31 @@ export default function ExpenseManagement() {
 
   return (
     <Container fluid className="title">
-      {/* Title */}
+      {/* HEADER */}
       <div
         style={{
           display: "flex",
           alignItems: "center",
           flexDirection: "column",
-          gap: "10px",
-          marginBottom: "5px",
+          gap: 10,
+          marginBottom: 5,
           textAlign: "center",
         }}
       >
         <h2
-          style={{
-            color: "#f35c96ff",
-            fontWeight: "600",
-            margin: "8px 0 4px 0",
-          }}
+          style={{ color: "#f35c96ff", fontWeight: 600, margin: "8px 0 4px 0" }}
         >
           <AiOutlineShoppingCart size={40} color="#524f4fff" /> Expense
           Management
         </h2>
+        <p style={{ color: "#666", marginBottom: 30, textAlign: "center" }}>
+          Track and manage all business expenses
+        </p>
       </div>
-      <p
-        style={{
-          color: "#666",
-          marginBottom: "30px",
-          textAlign: "center",
-        }}
-      >
-        Track and manage all business expenses
-      </p>
 
-      {/* Stats */}
       <ExpenseStatCards cards={cards} />
 
-      {/* Filters + Add */}
+      {/* FILTERS */}
       <Row className="mb-3 align-items-center">
         <Col xs={12} md={3}>
           <Form.Select
@@ -261,7 +350,7 @@ export default function ExpenseManagement() {
           <Form.Control
             type={filterDate ? "date" : "text"}
             value={filterDate}
-            placeholder="Filters by Date"
+            placeholder="Filter by Date"
             onFocus={(e) => (e.target.type = "date")}
             onBlur={(e) => {
               if (!filterDate) e.target.type = "text";
@@ -284,7 +373,10 @@ export default function ExpenseManagement() {
         </Col>
       </Row>
 
-      {/* Table */}
+      {/* TABLE */}
+      {loading && <p>Loading...</p>}
+      {error && <p className="text-danger">{error}</p>}
+
       <div className="table-responsive mt-3">
         <motion.table
           className="table align-middle table-hover"
@@ -349,7 +441,7 @@ export default function ExpenseManagement() {
                     size="sm"
                     variant="primary"
                     className="me-2"
-                    onClick={() => setEditingExpense(e)}
+                    onClick={() => openEdit(e)}
                   >
                     <CiEdit /> Edit
                   </Button>
@@ -375,7 +467,7 @@ export default function ExpenseManagement() {
         </motion.table>
       </div>
 
-      {/* Pagination */}
+      {/* PAGINATION */}
       {filteredAndSorted.length > itemsPerPage && (
         <Row className="mt-3">
           <Col className="d-flex justify-content-center">
@@ -412,7 +504,7 @@ export default function ExpenseManagement() {
         </Row>
       )}
 
-      {/* Edit Modal */}
+      {/* EDIT MODAL */}
       <Modal
         show={!!editingExpense}
         onHide={() => setEditingExpense(null)}
@@ -423,12 +515,7 @@ export default function ExpenseManagement() {
         </Modal.Header>
         <Modal.Body>
           {editingExpense && (
-            <Form
-              onSubmit={(ev) => {
-                ev.preventDefault();
-                handleSaveEdit(editingExpense);
-              }}
-            >
+            <Form onSubmit={handleSaveEdit}>
               <Form.Group className="mb-2">
                 <Form.Label>Type</Form.Label>
                 <Form.Select
@@ -454,7 +541,7 @@ export default function ExpenseManagement() {
                   onChange={(ev) =>
                     setEditingExpense({
                       ...editingExpense,
-                      price: parseFloat(ev.target.value),
+                      price: ev.target.value,
                     })
                   }
                 />
@@ -511,13 +598,13 @@ export default function ExpenseManagement() {
         </Modal.Body>
       </Modal>
 
-      {/* Add Modal */}
+      {/* ADD MODAL */}
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Add New Expense</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
+        <Form onSubmit={handleAddExpense}>
+          <Modal.Header closeButton>
+            <Modal.Title>Add New Expense</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
             <Form.Group className="mb-2">
               <Form.Label>Type</Form.Label>
               <Form.Select
@@ -561,22 +648,22 @@ export default function ExpenseManagement() {
                 }
               />
             </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowModal(false)}>
-            Cancel
-          </Button>
-          <Button
-            style={{
-              background: "linear-gradient(to right, #f77fbe, #e84a87)",
-              border: "none",
-            }}
-            onClick={handleAddExpense}
-          >
-            Save
-          </Button>
-        </Modal.Footer>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setShowModal(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              style={{
+                background: "linear-gradient(to right, #f77fbe, #e84a87)",
+                border: "none",
+              }}
+            >
+              Save
+            </Button>
+          </Modal.Footer>
+        </Form>
       </Modal>
     </Container>
   );

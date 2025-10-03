@@ -17,7 +17,7 @@ export default function ProductToolbar({
     image: null,
   });
 
-  // Pre-fill form if editing
+  // Pre-fill when editing
   useEffect(() => {
     if (editingProduct) {
       setFormData({
@@ -32,6 +32,7 @@ export default function ProductToolbar({
     }
   }, [editingProduct]);
 
+  // Handle form input changes
   const handleChange = (e) => {
     const { name, value, files } = e.target;
     setFormData((prev) => ({
@@ -40,38 +41,36 @@ export default function ProductToolbar({
     }));
   };
 
+  // Handle submit
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const productData = {
-      name: formData.type, // you may add separate "name" later
-      type: formData.type,
-      buy_price: Number(formData.buy_price),
-      sell_price: Number(formData.sell_price),
-      stock: Number(formData.stock),
-      status: formData.status,
-      image:
-        formData.image && typeof formData.image !== "string"
-          ? URL.createObjectURL(formData.image) // preview only
-          : editingProduct?.image || "https://via.placeholder.com/48",
-    };
-
     try {
+      const formDataToSend = new FormData();
+      formDataToSend.append("name", formData.type);
+      formDataToSend.append("type", formData.type);
+      formDataToSend.append("buy_price", formData.buy_price);
+      formDataToSend.append("sell_price", formData.sell_price);
+      formDataToSend.append("stock", formData.stock);
+      formDataToSend.append("status", formData.status);
+
+      if (formData.image) {
+        formDataToSend.append("image", formData.image);
+      }
+
       let res;
       if (editingProduct) {
         res = await fetch(
           `http://localhost:5000/api/items/${editingProduct.id}`,
           {
             method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(productData),
+            body: formDataToSend,
           }
         );
       } else {
         res = await fetch("http://localhost:5000/api/items", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(productData),
+          body: formDataToSend,
         });
       }
 
@@ -83,7 +82,7 @@ export default function ProductToolbar({
         onAddProduct(savedProduct);
       }
 
-      // reset form
+      // reset
       setFormData({
         buy_price: "",
         sell_price: "",
@@ -102,13 +101,51 @@ export default function ProductToolbar({
 
   return (
     <div className="container mt-4">
-      <button
-        onClick={() => setShowForm(true)}
-        className="btn btn-success mb-3"
+      {/* 🔹 Toolbar UI (like your screenshot) */}
+      <div
+        className="d-flex align-items-center gap-3 p-3 mb-4"
+        style={{
+          background: "#fff",
+          borderRadius: "12px",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+        }}
       >
-        + Add New Product
-      </button>
+        <select
+          className="form-select border-0 shadow-sm"
+          style={{ maxWidth: "200px" }}
+        >
+          <option>All Products</option>
+          <option>In Stock</option>
+          <option>Out of Stock</option>
+        </select>
 
+        <select
+          className="form-select border-0 shadow-sm"
+          style={{ maxWidth: "200px" }}
+        >
+          <option>All Types</option>
+          <option value="dress">Dress</option>
+          <option value="shirt">Shirt</option>
+          <option value="pants">Pants</option>
+          <option value="shoes">Shoes</option>
+        </select>
+
+        <button
+          onClick={() => setShowForm(true)}
+          className="btn fw-semibold"
+          style={{
+            background: "linear-gradient(135deg, #48bb78, #38a169)",
+            color: "#fff",
+            padding: "10px 18px",
+            borderRadius: "8px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+          }}
+        >
+          + Add New Product
+        </button>
+      </div>
+
+      {/* 🔹 Modal (same logic as before) */}
       {showForm && (
         <div
           className="modal d-block"
@@ -191,6 +228,24 @@ export default function ProductToolbar({
                     onChange={handleChange}
                     className="form-control mb-2"
                   />
+
+                  {/* Preview new file */}
+                  {formData.image && typeof formData.image !== "string" && (
+                    <img
+                      src={URL.createObjectURL(formData.image)}
+                      alt="preview"
+                      style={{ width: "100px", marginTop: "10px" }}
+                    />
+                  )}
+
+                  {/* Show current image when editing */}
+                  {editingProduct?.image && !formData.image && (
+                    <img
+                      src={`http://localhost:5000${editingProduct.image}`}
+                      alt="current"
+                      style={{ width: "100px", marginTop: "10px" }}
+                    />
+                  )}
                 </div>
 
                 <div className="modal-footer">

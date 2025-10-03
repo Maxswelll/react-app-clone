@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from "react";
 import StatCards from "./StockCard";
 import ProductToolbar from "./StockSelection";
-import ProductFilters from "./StockProductFilters";
 import ProductTable from "./StockProductTable";
 import Pagination from "./StockPagination";
 import productsData from "./items";
@@ -33,20 +32,12 @@ export default function StockManagment() {
     fetchProducts();
   }, []);
 
-  // ✅ CRUD
-  const addProduct = async (newItem) => {
-    try {
-      const res = await fetch("http://localhost:5000/api/items", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newItem),
-      });
-      if (res.ok) fetchProducts();
-    } catch (err) {
-      console.error("Error adding product:", err);
-    }
+  // ✅ Add product
+  const addProduct = (newItem) => {
+    setProducts((prev) => [...prev, newItem]);
   };
 
+  // ✅ Edit product
   const editProduct = async (updated) => {
     try {
       const res = await fetch(`http://localhost:5000/api/items/${updated.id}`, {
@@ -63,6 +54,7 @@ export default function StockManagment() {
     }
   };
 
+  // ✅ Delete product
   const deleteProduct = async (id) => {
     try {
       const res = await fetch(`http://localhost:5000/api/items/${id}`, {
@@ -102,15 +94,15 @@ export default function StockManagment() {
 
   return (
     <>
-      <StatCards products={products} />
+      {/* 🔥 Cards now show counts based on current page only */}
+      <StatCards products={currentProducts} />
+
       <ProductToolbar
         onAddProduct={addProduct}
         onEditProduct={editProduct}
         editingProduct={editingProduct}
         setEditingProduct={setEditingProduct}
         refreshProducts={fetchProducts}
-      />
-      <ProductFilters
         filterType={filterType}
         setFilterType={setFilterType}
         filterStatus={filterStatus}
@@ -121,9 +113,10 @@ export default function StockManagment() {
       />
       <ProductTable
         products={currentProducts}
-        onDelete={deleteProduct} // ✅ now clean
+        onDelete={deleteProduct}
         setEditingProduct={setEditingProduct}
       />
+
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}

@@ -1,12 +1,13 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
-import products from "../../../app/admin/components/items";
 import Filters from "./filter";
 import Footer from "./footer";
 
 export default function Products() {
   const [index, setIndex] = useState(null);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const [filters, setFilters] = useState({
     type: "",
@@ -16,19 +17,37 @@ export default function Products() {
 
   const { type, stock, search } = filters;
 
-  const filteredProducts = products.filter((p) => {
+  // ✅ Fetch products from backend
+  useEffect(() => {
+    fetch("http://localhost:5000/api/items")
+      .then((res) => res.json())
+      .then((data) => {
+        setItems(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Error fetching products:", err);
+        setLoading(false);
+      });
+  }, []);
+
+  // ✅ Filtering logic
+  const filteredProducts = items.filter((p) => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
     const matchType = type ? p.type === type : true;
+    const matchSize = filters.size ? p.sizes?.includes(filters.size) : true; // 🔥 NEW
     let matchStock = true;
     if (stock === "in") matchStock = p.stock > 0;
     if (stock === "out") matchStock = p.stock === 0;
-    return matchSearch && matchType && matchStock;
+
+    return matchSearch && matchType && matchSize && matchStock;
   });
 
   const handleNext = () =>
     setIndex((i) => (i < filteredProducts.length - 1 ? i + 1 : i));
   const handlePrev = () => setIndex((i) => (i > 0 ? i - 1 : i));
 
+  // --- styles ---
   const cardStyle = {
     background: "#fff",
     boxShadow: "0 2px 8px #0000000f",
@@ -76,101 +95,112 @@ export default function Products() {
       {/* Filters */}
       <Filters filters={filters} setFilters={setFilters} />
 
-      <div className="row g-3 mt-3">
-        {filteredProducts.length === 0 ? (
-          <div className="text-center py-5 text-muted">
-            <h4>No products found 😢</h4>
-            <p>Try adjusting your filters or search keywords.</p>
-          </div>
-        ) : (
-          filteredProducts.map((product, i) => (
-            <div key={product.id} className="col-md-6 col-lg-4">
-              <div
-                style={cardStyle}
-                className="d-flex align-items-center"
-                onClick={() => setIndex(i)}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.boxShadow =
-                    "0 6px 16px rgba(0,0,0,0.2)";
-                  e.currentTarget.style.transform = "translateY(-5px)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.boxShadow = "0 2px 8px #0000000f";
-                  e.currentTarget.style.transform = "translateY(0)";
-                }}
-              >
-                {/* Product Image */}
-                <div>
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    style={imgStyle}
-                  />
-                </div>
-
-                {/* Product Info */}
-                <div style={{ marginLeft: "12px", flex: 1 }}>
-                  {/* Stock Badge */}
-                  <span style={badgeStyle(product.stock > 0)}>
-                    {product.stock > 0 ? "IN STOCK" : "OUT OF STOCK"}
-                  </span>
-
-                  {/* ✅ Show Sizes */}
-                  <p
-                    style={{
-                      margin: "6px 0",
-                      fontSize: ".7rem",
-                      fontWeight: "600",
-                      color: "#64748b",
-                      letterSpacing: ".5px",
-                    }}
-                  >
-                    <span style={{ fontWeight: "normal", color: "#64748b" }}>
-                      AVAILABLE SIZE
-                    </span>
-                    <br />
-                    <span style={{ fontWeight: "bold", color: "#000" }}>
-                      {product.sizes.length > 0
-                        ? product.sizes.join(" • ")
-                        : "—"}
-                    </span>
-                  </p>
-
-                  {/* Price + Discount */}
+      {/* Loader */}
+      {loading ? (
+        <div className="text-center py-5">Loading products...</div>
+      ) : (
+        <div className="row g-3 mt-3">
+          {filteredProducts.length === 0 ? (
+            <div className="text-center py-5 text-muted">
+              <h4>No products found 😢</h4>
+              <p>Try adjusting your filters or search keywords.</p>
+            </div>
+          ) : (
+            filteredProducts.map((product, i) => (
+              <div key={product.id} className="col-md-6 col-lg-4">
+                <div
+                  style={cardStyle}
+                  className="d-flex align-items-center"
+                  onClick={() => setIndex(i)}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.boxShadow =
+                      "0 6px 16px rgba(0,0,0,0.2)";
+                    e.currentTarget.style.transform = "translateY(-5px)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.boxShadow = "0 2px 8px #0000000f";
+                    e.currentTarget.style.transform = "translateY(0)";
+                  }}
+                >
+                  {/* Product Image */}
                   <div>
-                    <span
+                    <img
+                      src={
+                        product.image?.startsWith("http")
+                          ? product.image
+                          : product.image?.startsWith("/uploads")
+                          ? `http://localhost:5000${product.image}`
+                          : `http://localhost:5000/uploads/${product.image}`
+                      }
+                      alt={product.name}
+                      style={imgStyle}
+                    />
+                  </div>
+
+                  {/* Product Info */}
+                  <div style={{ marginLeft: "12px", flex: 1 }}>
+                    {/* Stock Badge */}
+                    <span style={badgeStyle(product.stock > 0)}>
+                      {product.stock > 0 ? "IN STOCK" : "OUT OF STOCK"}
+                    </span>
+
+                    {/* Sizes */}
+                    <p
                       style={{
-                        color: "#dc3545",
-                        fontWeight: "bold",
-                        fontSize: "1rem",
+                        margin: "6px 0",
+                        fontSize: ".7rem",
+                        fontWeight: "600",
+                        color: "#64748b",
+                        letterSpacing: ".5px",
                       }}
                     >
-                      ${product.sell_price.toFixed(2)}
-                    </span>
-                    <span
-                      style={{
-                        textDecoration: "line-through",
-                        color: "#888",
-                        marginLeft: "6px",
-                        fontSize: "0.9rem",
-                      }}
-                    >
-                      ${product.buy_price.toFixed(2)}
-                    </span>
-                    <span style={discountStyle}>{product.discount}</span>
+                      <span style={{ fontWeight: "normal", color: "#64748b" }}>
+                        AVAILABLE SIZE
+                      </span>
+                      <br />
+                      <span style={{ fontWeight: "bold", color: "#000" }}>
+                        {product.sizes?.length > 0
+                          ? product.sizes.join(" • ")
+                          : "—"}
+                      </span>
+                    </p>
+
+                    {/* Price + Discount */}
+                    <div>
+                      <span
+                        style={{
+                          color: "#dc3545",
+                          fontWeight: "bold",
+                          fontSize: "1rem",
+                        }}
+                      >
+                        ${Number(product.sell_price).toFixed(2)}
+                      </span>
+                      <span
+                        style={{
+                          textDecoration: "line-through",
+                          color: "#888",
+                          marginLeft: "6px",
+                          fontSize: "0.9rem",
+                        }}
+                      >
+                        ${Number(product.buy_price).toFixed(2)}
+                      </span>
+                      <span style={discountStyle}>{product.discount}</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))
-        )}
+            ))
+          )}
 
-        {/* Footer */}
-        <Footer
-          filteredCount={filteredProducts.length}
-          totalCount={products.length}
-        />
-      </div>
+          {/* Footer */}
+          <Footer
+            filteredCount={filteredProducts.length}
+            totalCount={items.length}
+          />
+        </div>
+      )}
 
       {/* Product Modal */}
       {index !== null && (
@@ -197,7 +227,13 @@ export default function Products() {
                   style={{ minHeight: "500px" }}
                 >
                   <img
-                    src={filteredProducts[index].image}
+                    src={
+                      filteredProducts[index].image?.startsWith("http")
+                        ? filteredProducts[index].image
+                        : filteredProducts[index].image?.startsWith("/uploads")
+                        ? `http://localhost:5000${filteredProducts[index].image}`
+                        : `http://localhost:5000/uploads/${filteredProducts[index].image}`
+                    }
                     alt={filteredProducts[index].name}
                     style={{
                       maxWidth: "100%",
@@ -223,7 +259,7 @@ export default function Products() {
                         fontSize: "1.8rem",
                       }}
                     >
-                      ${filteredProducts[index].sell_price.toFixed(2)}
+                      ${Number(filteredProducts[index].sell_price).toFixed(2)}
                     </span>
                     <span
                       style={{
@@ -233,7 +269,7 @@ export default function Products() {
                         fontSize: "1.1rem",
                       }}
                     >
-                      ${filteredProducts[index].buy_price.toFixed(2)}
+                      ${Number(filteredProducts[index].buy_price).toFixed(2)}
                     </span>
                     <span style={discountStyle}>
                       {filteredProducts[index].discount}
@@ -244,7 +280,7 @@ export default function Products() {
                   <p style={{ marginTop: "16px" }}>
                     <strong>Available Sizes:</strong>
                     <br />
-                    {filteredProducts[index].sizes.length > 0
+                    {filteredProducts[index].sizes?.length > 0
                       ? filteredProducts[index].sizes.join(" • ")
                       : "—"}
                   </p>

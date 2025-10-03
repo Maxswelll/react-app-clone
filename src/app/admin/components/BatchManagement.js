@@ -1,15 +1,39 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Pagination from "./StockPagination";
 import { AiOutlineDollarCircle } from "react-icons/ai";
-import products from "./items"; // 👈 import items.js directly
+
+// ✅ Utility to unify image paths
+const getImageUrl = (image) => {
+  if (!image) return "/default-placeholder.png"; // fallback image
+  return image.startsWith("http")
+    ? image
+    : image.startsWith("/uploads")
+    ? `http://localhost:5000${image}`
+    : `http://localhost:5000/uploads/${image}`;
+};
 
 export default function BatchManagement() {
+  const [products, setProducts] = useState([]); // ✅ fetched from backend
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [statusFilter, setStatusFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
+
+  // ✅ Fetch from backend (same as stock management)
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/items");
+        const data = await res.json();
+        setProducts(data);
+      } catch (err) {
+        console.error("Error fetching products:", err);
+      }
+    };
+    fetchData();
+  }, []);
 
   // --- Sorting Logic ---
   const sortedProducts = [...products].sort((a, b) => {
@@ -65,28 +89,38 @@ export default function BatchManagement() {
         To manage product for batch selling.
       </p>
 
-      <div className="table-responsive shadow rounded bg-white p-2 p-md-3">
-        <table className="table table-hover align-middle">
+      <div className="table-responsive mt-3">
+        <table className="table align-middle table-hover text-nowrap">
           <thead className="table-light">
             <tr>
-              <th>Image</th>
-              <th>Price</th>
               <th
+                style={{ color: "#344767", fontWeight: 600, cursor: "pointer" }}
+              >
+                Image
+              </th>
+              <th
+                style={{ color: "#344767", fontWeight: 600, cursor: "pointer" }}
+              >
+                Price
+              </th>
+              <th
+                style={{ color: "#344767", fontWeight: 600, cursor: "pointer" }}
                 className="d-none d-sm-table-cell"
-                style={{ cursor: "pointer" }}
                 onClick={() => setSortConfig({ key: "size", direction: "asc" })}
               >
                 Available Sizes {getArrow("size")}
               </th>
               <th
-                style={{ cursor: "pointer" }}
+                style={{ color: "#344767", fontWeight: 600, cursor: "pointer" }}
                 onClick={() =>
                   setSortConfig({ key: "stock", direction: "asc" })
                 }
               >
                 Stock Qty {getArrow("stock")}
               </th>
-              <th>
+              <th
+                style={{ color: "#344767", fontWeight: 600, cursor: "pointer" }}
+              >
                 Status{" "}
                 <select
                   className="form-select form-select-sm d-inline w-auto ms-2"
@@ -108,7 +142,7 @@ export default function BatchManagement() {
               <tr key={p.id}>
                 <td>
                   <img
-                    src={p.image}
+                    src={getImageUrl(p.image)}
                     alt={p.name}
                     width="50"
                     height="50"
@@ -117,14 +151,38 @@ export default function BatchManagement() {
                 </td>
                 <td>${p.sell_price}</td>
                 <td className="d-none d-sm-table-cell">
-                  {p.sizes?.join("kg/   ") || "—"}
+                  {p.sizes?.join(", ") || "—"}
                 </td>
                 <td>{p.stock}</td>
                 <td>
                   {p.stock > 0 ? (
-                    <span className="badge bg-success">In Stock</span>
+                    <span
+                      style={{
+                        color: "#389e0d",
+                        background: "#f6ffed",
+                        border: "2px solid #b7eb8f",
+                        fontWeight: "600",
+                        borderRadius: "6px",
+                        padding: ".25rem .75rem",
+                        display: "inline-block",
+                      }}
+                    >
+                      In Stock
+                    </span>
                   ) : (
-                    <span className="badge bg-danger">Out of Stock</span>
+                    <span
+                      style={{
+                        color: "#cf1322",
+                        background: "#fff1f0",
+                        border: "2px solid #ffa39e",
+                        fontWeight: "600",
+                        borderRadius: "6px",
+                        padding: ".25rem .75rem",
+                        display: "inline-block",
+                      }}
+                    >
+                      Out of Stock
+                    </span>
                   )}
                 </td>
               </tr>

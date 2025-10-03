@@ -1,3 +1,4 @@
+// IncomeManagement.jsx
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
 import {
@@ -16,7 +17,6 @@ import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { AiOutlineDollarCircle } from "react-icons/ai";
 import { BsPeople } from "react-icons/bs";
 import { AiOutlineArrowUp, AiOutlineArrowDown } from "react-icons/ai";
-import initialData from "./IncomeData";
 
 // Uppercase profile name with logic
 function initials(name = "") {
@@ -27,13 +27,11 @@ function initials(name = "") {
 }
 // return linear-gradient bg color random
 function colorFromString(s) {
-  //   hash value
   let h = 0;
   for (let i = 0; i < s.length; i++) {
     h = (h << 5) - h + s.charCodeAt(i);
     h |= 0;
   }
-  //   % 360 to make sure it stays between 0-359
   const hue = Math.abs(h) % 360;
   return `linear-gradient(135deg,hsl(${hue} 70% 50%), hsl(${
     (hue + 30) % 360
@@ -41,7 +39,11 @@ function colorFromString(s) {
 }
 
 export default function IncomeManagement() {
-  const [data, setData] = useState(initialData);
+  // API endpoint (change if your server runs elsewhere)
+  const API_URL =
+    process.env.NEXT_PUBLIC_INCOME_API || "http://localhost:5002/api/income";
+
+  const [data, setData] = useState([]); // will be loaded from backend
   const [filterDate, setFilterDate] = useState("");
   const [search, setSearch] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: "date", dir: "desc" });
@@ -62,36 +64,140 @@ export default function IncomeManagement() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [goToValue, setGoToValue] = useState("");
 
-  // derived stats
+  // -------------------------
+  // Backend interaction
+  // -------------------------
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  async function fetchData() {
+    try {
+      const res = await fetch(API_URL);
+      if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+      const json = await res.json();
+      // Normalize rows: ensure quantity & total are numbers and date is YYYY-MM-DD
+      const normalized = json.map((r) => ({
+        id: r.id,
+        customer: r.customer || "",
+        quantity: Number(r.quantity || 0),
+        total: Number(r.total || 0),
+        date: r.date || "", // backend returns YYYY-MM-DD
+      }));
+      setData(normalized);
+    } catch (err) {
+      console.error("Failed to load income data:", err);
+    }
+  }
+
+  async function saveForm(e) {
+    e.preventDefault();
+
+    // validate minimal
+    if (!form.customer || !form.date || !form.total) return;
+
+    const payload = {
+      customer: form.customer,
+      quantity: Number(form.quantity || 0),
+      total: Number(form.total || 0),
+      date: form.date, // plain YYYY-MM-DD
+    };
+
+    try {
+      if (editing) {
+        // update
+        const res = await fetch(`${API_URL}/${form.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error(`Update failed: ${res.status}`);
+        const updated = await res.json();
+        // normalized
+        const row = {
+          id: updated.id,
+          customer: updated.customer,
+          quantity: Number(updated.quantity || 0),
+          total: Number(updated.total || 0),
+          date: updated.date || "",
+        };
+        setData((d) => d.map((x) => (x.id === row.id ? row : x)));
+      } else {
+        // create
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error(`Create failed: ${res.status}`);
+        const created = await res.json();
+        const row = {
+          id: created.id,
+          customer: created.customer,
+          quantity: Number(created.quantity || 0),
+          total: Number(created.total || 0),
+          date: created.date || "",
+        };
+        setData((d) => [row, ...d]);
+      }
+
+      // cleanup
+      setShowModal(false);
+      setForm({ id: null, customer: "", quantity: 1, total: "", date: "" });
+      setEditing(null);
+      setCurrentPage(1);
+    } catch (err) {
+      console.error("Save income error:", err);
+      alert("Failed to save income (check console)");
+    }
+  }
+
+  async function onDelete(id) {
+    if (!confirm("Delete this entry?")) return;
+    try {
+      const res = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
+      setData((d) => d.filter((x) => x.id !== id));
+    } catch (err) {
+      console.error("Delete income error:", err);
+      alert("Failed to delete (check console)");
+    }
+  }
+
+  // -------------------------
+  // Derived stats
+  // -------------------------
   const totals = useMemo(() => {
     const totalIncome = data.reduce((s, r) => s + Number(r.total || 0), 0);
 
     const productIncome = data
-      .filter((r) => r.quantity > 1)
+      .filter((r) => Number(r.quantity || 0) > 1)
       .reduce((s, r) => s + Number(r.total || 0), 0);
 
     const boostIncome = data
-      .filter((r) => r.customer.toLowerCase().includes("boost"))
+      .filter((r) => (r.customer || "").toLowerCase().includes("boost"))
       .reduce((s, r) => s + Number(r.total || 0), 0);
 
     const panhaIncome = data
-      .filter((r) => r.customer.toLowerCase() === "panha")
+      .filter((r) => (r.customer || "").toLowerCase() === "panha")
       .reduce((s, r) => s + Number(r.total || 0), 0);
 
     return {
       totalIncome,
       productIncome,
       boostIncome,
-      panhaIncome, //
+      panhaIncome,
       customers: data.length,
     };
   }, [data]);
 
-  // filtered & sorted
+  // -------------------------
+  // Filtering / Sorting / Pagination
+  // -------------------------
   const filtered = data
     .filter((r) =>
       search.trim()
-        ? r.customer.toLowerCase().includes(search.toLowerCase())
+        ? (r.customer || "").toLowerCase().includes(search.toLowerCase())
         : true
     )
     .filter((r) => (filterDate ? r.date === filterDate : true))
@@ -114,12 +220,14 @@ export default function IncomeManagement() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(totalPages);
-  }, [totalPages]);
+  }, [totalPages, currentPage]);
 
   const pageStart = (currentPage - 1) * itemsPerPage;
   const pageData = filtered.slice(pageStart, pageStart + itemsPerPage);
 
-  // handlers
+  // -------------------------
+  // UI handlers
+  // -------------------------
   function openAdd() {
     setForm({ id: null, customer: "", quantity: 1, total: "", date: "" });
     setEditing(null);
@@ -136,30 +244,6 @@ export default function IncomeManagement() {
     setEditing(item.id);
     setShowModal(true);
   }
-  function onDelete(id) {
-    if (!confirm("Delete this entry?")) return;
-    setData((d) => d.filter((x) => x.id !== id));
-  }
-  function saveForm(e) {
-    e.preventDefault();
-    const payload = {
-      ...form,
-      id: form.id || Date.now(),
-      quantity: Number(form.quantity),
-      total: Number(form.total),
-    };
-    setData((d) => {
-      if (form.id) {
-        return d.map((x) => (x.id === form.id ? payload : x));
-      }
-      return [payload, ...d];
-    });
-    setShowModal(false);
-    setForm({ id: null, customer: "", quantity: 1, total: "", date: "" });
-    setEditing(null);
-    setCurrentPage(1);
-  }
-
   function toggleSort(key) {
     setSortConfig((s) => {
       if (s.key === key) {
@@ -169,7 +253,6 @@ export default function IncomeManagement() {
     });
   }
 
-  // pagination helpers
   function goToPageInput() {
     const p = parseInt(goToValue || "", 10);
     if (!isNaN(p) && p >= 1 && p <= totalPages) {
@@ -178,11 +261,13 @@ export default function IncomeManagement() {
     }
   }
 
-  // small helper for quantity pill label
   function qtyLabel(n) {
     return `${n} item${n > 1 ? "s" : ""}`;
   }
 
+  // -------------------------
+  // Render
+  // -------------------------
   return (
     <Container fluid className="p-3">
       {/* Title */}
@@ -194,12 +279,7 @@ export default function IncomeManagement() {
           />
           Income Management
         </h2>
-        <small
-          style={{
-            fontSize: "15px",
-          }}
-          className="text-muted"
-        >
+        <small style={{ fontSize: "15px" }} className="text-muted">
           Track and manage all revenue streams
         </small>
       </div>
@@ -215,7 +295,6 @@ export default function IncomeManagement() {
             color:
               "linear-gradient(135deg, rgb(79, 172, 254), rgb(0, 242, 254))",
           },
-
           {
             id: "chenda",
             icon: <AiOutlineDollarCircle size={35} />,
@@ -232,7 +311,6 @@ export default function IncomeManagement() {
             color:
               "linear-gradient(135deg, rgb(79, 172, 254), rgb(0, 242, 254))",
           },
-
           {
             id: "customers",
             icon: <BsPeople size={35} />,
@@ -249,11 +327,7 @@ export default function IncomeManagement() {
             >
               <div
                 className="rounded-3 text-white d-flex align-items-center justify-content-center"
-                style={{
-                  width: 70,
-                  height: 70,
-                  background: c.color,
-                }}
+                style={{ width: 70, height: 70, background: c.color }}
               >
                 {c.icon}
               </div>
@@ -277,20 +351,6 @@ export default function IncomeManagement() {
             border: "none",
             borderRadius: "8px",
             transition: "all 0.3s ease",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "translateY(-3px) scale(1.05)";
-            e.currentTarget.style.boxShadow = "0 6px 15px rgba(0,0,0,0.2)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "none";
-            e.currentTarget.style.boxShadow = "0 3px 6px rgba(0,0,0,0.1)";
-          }}
-          onBlur={(e) => {
-            e.target.style.border = "1px solid black";
-          }}
-          onFocus={(e) => {
-            e.target.style.border = "none";
           }}
         >
           + Add Income
@@ -321,12 +381,13 @@ export default function IncomeManagement() {
                   onClick={() => toggleSort("quantity")}
                 >
                   Quantity{" "}
-                  {sortConfig.key === "quantity" &&
-                    (sortConfig.dir === "asc" ? (
+                  {sortConfig.key === "quantity" ? (
+                    sortConfig.dir === "asc" ? (
                       <AiOutlineArrowUp size={14} />
                     ) : (
                       <AiOutlineArrowDown size={14} />
-                    ))}
+                    )
+                  ) : null}
                 </th>
 
                 <th
@@ -338,12 +399,13 @@ export default function IncomeManagement() {
                   onClick={() => toggleSort("total")}
                 >
                   Total Amount{" "}
-                  {sortConfig.key === "total" &&
-                    (sortConfig.dir === "asc" ? (
+                  {sortConfig.key === "total" ? (
+                    sortConfig.dir === "asc" ? (
                       <AiOutlineArrowUp size={14} />
                     ) : (
                       <AiOutlineArrowDown size={14} />
-                    ))}
+                    )
+                  ) : null}
                 </th>
                 <th
                   style={{
@@ -354,12 +416,13 @@ export default function IncomeManagement() {
                   onClick={() => toggleSort("date")}
                 >
                   Buy Date{" "}
-                  {sortConfig.key === "date" &&
-                    (sortConfig.dir === "asc" ? (
+                  {sortConfig.key === "date" ? (
+                    sortConfig.dir === "asc" ? (
                       <AiOutlineArrowUp size={14} />
                     ) : (
                       <AiOutlineArrowDown size={14} />
-                    ))}
+                    )
+                  ) : null}
                 </th>
 
                 <th
@@ -388,9 +451,6 @@ export default function IncomeManagement() {
                       </div>
                       <div>
                         <div style={{ fontWeight: 500 }}>{r.customer}</div>
-                        <div className="text-muted" style={{ fontSize: 12 }}>
-                          {/* optional subtitle */}
-                        </div>
                       </div>
                     </div>
                   </td>
@@ -415,7 +475,8 @@ export default function IncomeManagement() {
                     ${Number(r.total).toFixed(2)}
                   </td>
 
-                  <td>{new Date(r.date).toLocaleDateString()}</td>
+                  {/* show date string directly to avoid timezone shift */}
+                  <td>{r.date}</td>
 
                   <td className="text-end">
                     <Button
@@ -544,7 +605,7 @@ export default function IncomeManagement() {
             <Form.Control
               placeholder="Go to"
               type="number"
-              min={0}
+              min={1}
               max={totalPages}
               value={goToValue}
               onChange={(e) => setGoToValue(e.target.value)}

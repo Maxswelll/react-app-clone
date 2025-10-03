@@ -2,12 +2,27 @@
 import express from "express";
 import cors from "cors";
 import pkg from "pg";
+import multer from "multer";
+import path from "path";
 
 const { Pool } = pkg;
 const app = express();
 
+// Middleware
 app.use(cors());
 app.use(express.json());
+
+// ✅ Multer setup for image uploads
+const storage = multer.diskStorage({
+  destination: "uploads/", // folder to save images
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname)); // unique filename
+  },
+});
+const upload = multer({ storage });
+
+// ✅ Serve uploads folder so frontend can access images
+app.use("/uploads", express.static("uploads"));
 
 // PostgreSQL connection
 const pool = new Pool({
@@ -59,25 +74,26 @@ app.get("/api/items", async (req, res) => {
   }
 });
 
-// Add product
-app.post("/api/items", async (req, res) => {
-  const {
-    name,
-    type,
-    buy_price,
-    sell_price,
-    discount,
-    stock,
-    status,
-    sizes,
-    image,
-  } = req.body;
+// ✅ Add product (with image upload)
+app.post("/api/items", upload.single("image"), async (req, res) => {
+  const { name, type, buy_price, sell_price, discount, stock, status, sizes } =
+    req.body;
+
+  // ✅ Save path if file uploaded
+  const imagePath = req.file ? `/uploads/${req.file.filename}` : null;
+
   try {
     const result = await pool.query(
-      `INSERT INTO items 
-       (name, type, buy_price, sell_price, discount, stock, status, sizes, image)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *;`[
-        (name,
+      `WITH next AS (
+         SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM items
+       )
+       INSERT INTO items
+       (id, name, type, buy_price, sell_price, discount, stock, status, sizes, image)
+       SELECT next_id, $1, $2, $3, $4, $5, $6, $7, $8, $9
+       FROM next
+       RETURNING *`,
+      [
+        name,
         type,
         buy_price,
         sell_price,
@@ -85,17 +101,18 @@ app.post("/api/items", async (req, res) => {
         stock,
         status,
         sizes,
-        image)
+        imagePath,
       ]
     );
+
     res.json(result.rows[0]);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 });
 
-// Update product
-app.put("/api/items/:id", async (req, res) => {
+// ✅ Update product (with optional new image)
+app.put("/api/items/:id", upload.single("image"), async (req, res) => {
   const { id } = req.params;
   const {
     name,
@@ -108,6 +125,9 @@ app.put("/api/items/:id", async (req, res) => {
     sizes,
     image,
   } = req.body;
+
+  // ✅ Keep old image if none uploaded
+  const imagePath = req.file ? `/uploads/${req.file.filename}` : image;
 
   try {
     const result = await pool.query(
@@ -123,7 +143,7 @@ app.put("/api/items/:id", async (req, res) => {
         stock,
         status,
         sizes,
-        image,
+        imagePath,
         id,
       ]
     );
@@ -138,7 +158,7 @@ app.put("/api/items/:id", async (req, res) => {
   }
 });
 
-// Delete product
+// ✅ Delete product
 app.delete("/api/items/:id", async (req, res) => {
   const { id } = req.params;
   try {

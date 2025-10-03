@@ -34,7 +34,15 @@ export default function ProductTable({
               <td>
                 {p.image ? (
                   <img
-                    src={p.image}
+                    src={
+                      p.image.startsWith("http")
+                        ? p.image // already full URL
+                        : `http://localhost:5000${
+                            p.image.startsWith("/uploads")
+                              ? p.image
+                              : `/uploads/${p.image}`
+                          }`
+                    }
                     alt={p.type || "product"}
                     className="img-fluid rounded"
                     style={{
