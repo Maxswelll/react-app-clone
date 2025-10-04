@@ -22,7 +22,36 @@ export default function Products() {
     fetch("http://localhost:5000/api/items")
       .then((res) => res.json())
       .then((data) => {
-        setItems(data);
+        const fixedData = data.map((item) => {
+          // ✅ Clean up sizes
+          let sizesArray = [];
+          if (Array.isArray(item.sizes)) {
+            sizesArray = item.sizes.map((s) =>
+              String(s)
+                .replace(/['"{}]/g, "")
+                .trim()
+            );
+          } else if (
+            typeof item.sizes === "string" &&
+            item.sizes.trim() !== ""
+          ) {
+            sizesArray = item.sizes
+              .replace(/[{}]/g, "")
+              .split(",")
+              .map((s) => s.replace(/['"]/g, "").trim())
+              .filter((s) => s !== "");
+          }
+
+          // ✅ Add formatted discount
+          let discountLabel = "";
+          if (item.discount && !isNaN(item.discount)) {
+            discountLabel = `${item.discount}% OFF`;
+          }
+
+          return { ...item, sizesArray, discountLabel };
+        });
+
+        setItems(fixedData);
         setLoading(false);
       })
       .catch((err) => {
@@ -33,9 +62,11 @@ export default function Products() {
 
   // ✅ Filtering logic
   const filteredProducts = items.filter((p) => {
-    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = p.name?.toLowerCase().includes(search.toLowerCase());
     const matchType = type ? p.type === type : true;
-    const matchSize = filters.size ? p.sizes?.includes(filters.size) : true; // 🔥 NEW
+    const matchSize = filters.size
+      ? p.sizesArray?.includes(filters.size)
+      : true;
     let matchStock = true;
     if (stock === "in") matchStock = p.stock > 0;
     if (stock === "out") matchStock = p.stock === 0;
@@ -159,8 +190,8 @@ export default function Products() {
                       </span>
                       <br />
                       <span style={{ fontWeight: "bold", color: "#000" }}>
-                        {product.sizes?.length > 0
-                          ? product.sizes.join(" • ")
+                        {product.sizesArray?.length > 0
+                          ? product.sizesArray.join(" • ")
                           : "—"}
                       </span>
                     </p>
@@ -186,7 +217,11 @@ export default function Products() {
                       >
                         ${Number(product.buy_price).toFixed(2)}
                       </span>
-                      <span style={discountStyle}>{product.discount}</span>
+                      {product.discountLabel && (
+                        <span style={discountStyle}>
+                          {product.discountLabel}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -271,17 +306,19 @@ export default function Products() {
                     >
                       ${Number(filteredProducts[index].buy_price).toFixed(2)}
                     </span>
-                    <span style={discountStyle}>
-                      {filteredProducts[index].discount}
-                    </span>
+                    {filteredProducts[index].discountLabel && (
+                      <span style={discountStyle}>
+                        {filteredProducts[index].discountLabel}
+                      </span>
+                    )}
                   </div>
 
                   {/* Sizes in Modal */}
                   <p style={{ marginTop: "16px" }}>
                     <strong>Available Sizes:</strong>
                     <br />
-                    {filteredProducts[index].sizes?.length > 0
-                      ? filteredProducts[index].sizes.join(" • ")
+                    {filteredProducts[index].sizesArray?.length > 0
+                      ? filteredProducts[index].sizesArray.join(" • ")
                       : "—"}
                   </p>
 

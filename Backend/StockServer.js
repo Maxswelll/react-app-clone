@@ -14,14 +14,14 @@ app.use(express.json());
 
 // ✅ Multer setup for image uploads
 const storage = multer.diskStorage({
-  destination: "uploads/", // folder to save images
+  destination: "uploads/",
   filename: (req, file, cb) => {
     cb(null, Date.now() + path.extname(file.originalname)); // unique filename
   },
 });
 const upload = multer({ storage });
 
-// ✅ Serve uploads folder so frontend can access images
+// ✅ Serve uploads folder
 app.use("/uploads", express.static("uploads"));
 
 // PostgreSQL connection
@@ -42,73 +42,50 @@ pool
 // 📦 PRODUCTS API
 // ====================
 
-// Get items with filters
+// Get all items
 app.get("/api/items", async (req, res) => {
   try {
-    const { type, status, search } = req.query;
+    const result = await pool.query("SELECT * FROM items ORDER BY id ASC");
 
-    let query = "SELECT * FROM items WHERE 1=1";
-    const params = [];
+    // ✅ Clean sizes safely
+    const rows = result.rows.map((item) => ({
+      ...item,
+      sizes: Array.isArray(item.sizes)
+        ? item.sizes
+        : typeof item.sizes === "string"
+        ? item.sizes
+            .replace(/[{}"']/g, "")
+            .split(",")
+            .map((s) => s.trim())
+        : [],
+    }));
 
-    if (type && type !== "All") {
-      params.push(type);
-      query += ` AND type = $${params.length}`;
-    }
-
-    if (status && status !== "All") {
-      params.push(status);
-      query += ` AND status = $${params.length}`;
-    }
-
-    if (search && search.trim() !== "") {
-      params.push(`%${search}%`);
-      query += ` AND (name ILIKE $${params.length} OR type ILIKE $${params.length})`;
-    }
-
-    query += " ORDER BY id ASC";
-
-    const result = await pool.query(query, params);
-    res.json(result.rows);
+    res.json(rows);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-<<<<<<< HEAD:Backend/StockServer.js
-// ✅ Add product (with image upload)
+// ✅ Add product
 app.post("/api/items", upload.single("image"), async (req, res) => {
   const { name, type, buy_price, sell_price, discount, stock, status, sizes } =
     req.body;
-
-  // ✅ Save path if file uploaded
   const imagePath = req.file ? `/uploads/${req.file.filename}` : null;
-=======
-// Add product
-app.post("/api/items", async (req, res) => {
-  const {
-    name,
-    type,
-    buy_price,
-    sell_price,
-    discount,
-    stock,
-    status,
-    sizes,
-    image,
-  } = req.body;
->>>>>>> d0373099c7e4def1d596fce641e0ae1a4dffd797:Backend/server.js
+
+  // ✅ Clean sizes (no quotes or braces)
+  const sizesArray = sizes
+    ? sizes
+        .replace(/[{}"']/g, "")
+        .split(",")
+        .map((s) => s.trim())
+    : [];
 
   try {
     const result = await pool.query(
-      `WITH next AS (
-         SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM items
-       )
-       INSERT INTO items
-       (id, name, type, buy_price, sell_price, discount, stock, status, sizes, image)
-       SELECT next_id, $1, $2, $3, $4, $5, $6, $7, $8, $9
-       FROM next
+      `WITH next AS (SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM items)
+       INSERT INTO items (id, name, type, buy_price, sell_price, discount, stock, status, sizes, image)
+       SELECT next_id, $1,$2,$3,$4,$5,$6,$7,$8,$9 FROM next
        RETURNING *`,
-<<<<<<< HEAD:Backend/StockServer.js
       [
         name,
         type,
@@ -117,21 +94,17 @@ app.post("/api/items", async (req, res) => {
         discount,
         stock,
         status,
-        sizes,
+        sizesArray,
         imagePath,
       ]
-=======
-      [name, type, buy_price, sell_price, discount, stock, status, sizes, image]
->>>>>>> d0373099c7e4def1d596fce641e0ae1a4dffd797:Backend/server.js
     );
-
     res.json(result.rows[0]);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 });
 
-// ✅ Update product (with optional new image)
+// ✅ Update product
 app.put("/api/items/:id", upload.single("image"), async (req, res) => {
   const { id } = req.params;
   const {
@@ -146,8 +119,15 @@ app.put("/api/items/:id", upload.single("image"), async (req, res) => {
     image,
   } = req.body;
 
-  // ✅ Keep old image if none uploaded
   const imagePath = req.file ? `/uploads/${req.file.filename}` : image;
+
+  // ✅ Clean sizes
+  const sizesArray = sizes
+    ? sizes
+        .replace(/[{}"']/g, "")
+        .split(",")
+        .map((s) => s.trim())
+    : [];
 
   try {
     const result = await pool.query(
@@ -162,15 +142,13 @@ app.put("/api/items/:id", upload.single("image"), async (req, res) => {
         discount,
         stock,
         status,
-        sizes,
+        sizesArray,
         imagePath,
         id,
       ]
     );
-
-    if (result.rows.length === 0) {
+    if (result.rows.length === 0)
       return res.status(404).json({ message: "Product not found" });
-    }
 
     res.json(result.rows[0]);
   } catch (err) {
@@ -180,24 +158,19 @@ app.put("/api/items/:id", upload.single("image"), async (req, res) => {
 
 // ✅ Delete product
 app.delete("/api/items/:id", async (req, res) => {
-  const { id } = req.params;
   try {
     const result = await pool.query(
       "DELETE FROM items WHERE id=$1 RETURNING *",
-      [id]
+      [req.params.id]
     );
-
-    if (result.rowCount === 0) {
-      return res.status(404).json({ message: `No product with id=${id}` });
-    }
-
-    res.json({ message: "Product deleted", deleted: result.rows[0] });
+    if (result.rowCount === 0)
+      return res.status(404).json({ message: "Product not found" });
+    res.json({ message: "Deleted", deleted: result.rows[0] });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// Start server
-app.listen(5000, () => {
-  console.log("✅ Server running at http://localhost:5000");
-});
+app.listen(5000, () =>
+  console.log("✅ Server running on http://localhost:5000")
+);

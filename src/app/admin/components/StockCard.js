@@ -1,16 +1,41 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { IoBagHandleOutline } from "react-icons/io5";
 import { FaCheckCircle, FaExclamationCircle } from "react-icons/fa";
 import { Row, Col } from "react-bootstrap";
 
-export default function ({ products }) {
+export default function StockCard({ products, filters }) {
   const [hovered, setHovered] = useState(null);
+  const [filteredProducts, setFilteredProducts] = useState(products || []);
 
-  // now it uses props, not static import
-  const total = products.length;
-  const inStock = products.filter((p) => p.status === "In Stock").length;
-  const outStock = products.filter((p) => p.status === "Out of Stock").length;
+  // ✅ Auto-update filtered data based on your filter dropdowns
+  useEffect(() => {
+    if (!filters) {
+      setFilteredProducts(products);
+      return;
+    }
+
+    let temp = [...products];
+
+    // Filter by stock status
+    if (filters.status && filters.status !== "All Products") {
+      temp = temp.filter((p) =>
+        filters.status === "In Stock" ? p.stock > 0 : p.stock <= 0
+      );
+    }
+
+    // Filter by type
+    if (filters.type && filters.type !== "All Types") {
+      temp = temp.filter((p) => p.type === filters.type);
+    }
+
+    setFilteredProducts(temp);
+  }, [products, filters]);
+
+  // ✅ Counts based on filtered products
+  const total = filteredProducts.length;
+  const inStock = filteredProducts.filter((p) => p.stock > 0).length;
+  const outStock = filteredProducts.filter((p) => p.stock <= 0).length;
 
   const cards = [
     {

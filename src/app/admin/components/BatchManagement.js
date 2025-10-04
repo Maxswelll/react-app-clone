@@ -14,20 +14,42 @@ const getImageUrl = (image) => {
     : `http://localhost:5000/uploads/${image}`;
 };
 
+// ✅ Clean and normalize sizes (works for array or string)
+const normalizeSizes = (sizes) => {
+  if (!sizes) return [];
+  if (Array.isArray(sizes))
+    return sizes.map((s) => s.toString().replace(/"/g, "").trim());
+  if (typeof sizes === "string") {
+    return sizes
+      .replace(/[{}"]/g, "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s);
+  }
+  return [];
+};
+
 export default function BatchManagement() {
-  const [products, setProducts] = useState([]); // ✅ fetched from backend
+  const [products, setProducts] = useState([]);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [statusFilter, setStatusFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
 
-  // ✅ Fetch from backend (same as stock management)
+  // ✅ Fetch from backend
   useEffect(() => {
     const fetchData = async () => {
       try {
         const res = await fetch("http://localhost:5000/api/items");
         const data = await res.json();
-        setProducts(data);
+
+        // ✅ Clean all sizes immediately
+        const cleaned = data.map((item) => ({
+          ...item,
+          sizes: normalizeSizes(item.sizes),
+        }));
+
+        setProducts(cleaned);
       } catch (err) {
         console.error("Error fetching products:", err);
       }
@@ -35,15 +57,27 @@ export default function BatchManagement() {
     fetchData();
   }, []);
 
-  // --- Sorting Logic ---
+  // ✅ Sort handler (toggle asc/desc)
+  const handleSort = (key) => {
+    setSortConfig((prev) => {
+      if (prev.key === key) {
+        return { key, direction: prev.direction === "asc" ? "desc" : "asc" };
+      }
+      return { key, direction: "asc" };
+    });
+  };
+
+  // ✅ Sorting logic
   const sortedProducts = [...products].sort((a, b) => {
     let valA, valB;
 
     if (sortConfig.key === "size") {
-      const getMinSize = (sizes) =>
-        Array.isArray(sizes)
-          ? Math.min(...sizes.map((s) => parseInt(s, 10) || 0))
-          : 0;
+      const getMinSize = (sizes) => {
+        const nums = normalizeSizes(sizes)
+          .map((s) => parseInt(s, 10))
+          .filter((n) => !isNaN(n));
+        return nums.length > 0 ? Math.min(...nums) : 0;
+      };
       valA = getMinSize(a.sizes);
       valB = getMinSize(b.sizes);
     } else if (sortConfig.key === "stock") {
@@ -58,14 +92,14 @@ export default function BatchManagement() {
     return 0;
   });
 
-  // --- Filtering ---
+  // ✅ Filtering
   const filteredProducts = sortedProducts.filter((p) => {
     if (statusFilter === "In Stock") return p.stock > 0;
     if (statusFilter === "Out of Stock") return p.stock === 0;
     return true;
   });
 
-  // --- Pagination ---
+  // ✅ Pagination
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentProducts = filteredProducts.slice(
@@ -93,34 +127,25 @@ export default function BatchManagement() {
         <table className="table align-middle table-hover text-nowrap">
           <thead className="table-light">
             <tr>
-              <th
-                style={{ color: "#344767", fontWeight: 600, cursor: "pointer" }}
-              >
-                Image
-              </th>
-              <th
-                style={{ color: "#344767", fontWeight: 600, cursor: "pointer" }}
-              >
-                Price
-              </th>
+              <th style={{ color: "#344767", fontWeight: 600 }}>Image</th>
+              <th style={{ color: "#344767", fontWeight: 600 }}>Price</th>
+
               <th
                 style={{ color: "#344767", fontWeight: 600, cursor: "pointer" }}
                 className="d-none d-sm-table-cell"
-                onClick={() => setSortConfig({ key: "size", direction: "asc" })}
+                onClick={() => handleSort("size")}
               >
                 Available Sizes {getArrow("size")}
               </th>
+
               <th
                 style={{ color: "#344767", fontWeight: 600, cursor: "pointer" }}
-                onClick={() =>
-                  setSortConfig({ key: "stock", direction: "asc" })
-                }
+                onClick={() => handleSort("stock")}
               >
                 Stock Qty {getArrow("stock")}
               </th>
-              <th
-                style={{ color: "#344767", fontWeight: 600, cursor: "pointer" }}
-              >
+
+              <th style={{ color: "#344767", fontWeight: 600 }}>
                 Status{" "}
                 <select
                   className="form-select form-select-sm d-inline w-auto ms-2"
@@ -137,6 +162,7 @@ export default function BatchManagement() {
               </th>
             </tr>
           </thead>
+
           <tbody>
             {currentProducts.map((p) => (
               <tr key={p.id}>
@@ -150,9 +176,12 @@ export default function BatchManagement() {
                   />
                 </td>
                 <td>${p.sell_price}</td>
+
+                {/* ✅ Show sizes cleanly */}
                 <td className="d-none d-sm-table-cell">
-                  {p.sizes?.join(", ") || "—"}
+                  {p.sizes && p.sizes.length > 0 ? p.sizes.join(" • ") : "—"}
                 </td>
+
                 <td>{p.stock}</td>
                 <td>
                   {p.stock > 0 ? (
