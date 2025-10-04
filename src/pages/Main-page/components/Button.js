@@ -3,29 +3,44 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { IoMdLogOut } from "react-icons/io";
 import { IoSpeedometerOutline } from "react-icons/io5";
+import { TbPlayerTrackNextFilled } from "react-icons/tb";
 
 export default function Log() {
   const router = useRouter();
   const [username, setUsername] = useState(null);
+  const [token, setToken] = useState(null);
 
   useEffect(() => {
-    // ✅ Get logged-in user from localStorage
+    // ✅ Load username and token from localStorage
     const storedUser = localStorage.getItem("username");
-    if (storedUser) {
+    const storedToken = localStorage.getItem("token");
+
+    if (storedUser && storedToken) {
       setUsername(storedUser);
+      setToken(storedToken);
+    } else {
+      setUsername(null);
+      setToken(null);
     }
   }, []);
 
   const handleLogout = () => {
-    // Clear session
+    // ✅ Clear session
     localStorage.removeItem("token");
     localStorage.removeItem("username");
-    // Redirect with query param
+    setUsername(null);
+    setToken(null);
+
+    // Redirect to login page
     router.push("/login?logout=success");
   };
 
   const handleAdmin = () => {
-    router.push("/admin"); // redirect to /admin page
+    router.push("/admin");
+  };
+
+  const handleSignUp = () => {
+    router.push("/signup"); // ✅ Redirect to sign-up page
   };
 
   return (
@@ -33,25 +48,40 @@ export default function Log() {
       className="position-absolute top-0 end-0 m-3 d-flex"
       style={{ gap: "10px" }}
     >
-      {/* ✅ Only show Admin button if username is Heang */}
-      {username === "Heang" && (
+      {/* ✅ If not logged in → Show Sign Up button */}
+      {!token && (
         <button
-          className="btn btn-primary rounded-3"
-          onClick={handleAdmin}
-          style={{ padding: "7px" }}
+          type="button"
+          class="btn btn-outline-info"
+          onClick={handleSignUp}
+          style={{ padding: "7px", cursor: "pointer" }}
         >
-          <IoSpeedometerOutline size={20} /> Admin
+          Sign Up <TbPlayerTrackNextFilled size={20} height={7} />
         </button>
       )}
 
-      {/* Logout Button */}
-      <button
-        className="btn btn-outline-danger rounded-3"
-        onClick={handleLogout}
-        style={{ padding: "7px" }}
-      >
-        <IoMdLogOut size={20} /> Logout
-      </button>
+      {/* ✅ If logged in → Show Admin (only for Heang) + Logout */}
+      {token && (
+        <>
+          {username === "Heang" && (
+            <button
+              className="btn btn-primary rounded-3"
+              onClick={handleAdmin}
+              style={{ padding: "7px", cursor: "pointer" }}
+            >
+              <IoSpeedometerOutline size={20} /> Admin
+            </button>
+          )}
+
+          <button
+            className="btn btn-outline-danger rounded-3"
+            onClick={handleLogout}
+            style={{ padding: "7px", cursor: "pointer" }}
+          >
+            <IoMdLogOut size={20} /> Logout
+          </button>
+        </>
+      )}
     </div>
   );
 }

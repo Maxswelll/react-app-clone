@@ -7,6 +7,7 @@ import Log from "./components/Button";
 import Products from "./components/products";
 // import Footer from "./components/footer";
 import Admin from "./components/Button";
+// import SignupPage from "@/app/Signup/SignupPage";
 
 function BabyOutfitPage() {
   return (
@@ -14,6 +15,7 @@ function BabyOutfitPage() {
       <Header />
       <Log />
       <Admin />
+      {/* <SignupPage /> */}
       {/* <Filters /> */}
       <Products />
       {/* <Footer /> */}
