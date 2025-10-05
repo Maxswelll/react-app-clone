@@ -3,8 +3,10 @@ import { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Filters from "./filter";
 import Footer from "./footer";
+import { useRouter } from "next/navigation";
 
 export default function Products() {
+  const router = useRouter();
   const [index, setIndex] = useState(null);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -43,9 +45,11 @@ export default function Products() {
           }
 
           // ✅ Add formatted discount
-          let discountLabel = "";
-          if (item.discount && !isNaN(item.discount)) {
+          let discountLabel;
+          if (!isNaN(item.discount) && item.discount > 0) {
             discountLabel = `${item.discount}% OFF`;
+          } else {
+            discountLabel = "No discount";
           }
 
           return { ...item, sizesArray, discountLabel };
@@ -119,6 +123,25 @@ export default function Products() {
     background: "linear-gradient(135deg, #e53e3e, #fc8181)",
     color: "#fff",
     marginLeft: "8px",
+  };
+
+  const handleAddToCart = (product) => {
+    // Get cart from localStorage
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+    // Check if product already in cart
+    const existing = cart.find((item) => item.id === product.id);
+    if (existing) {
+      existing.quantity += 1;
+    } else {
+      cart.push({ id: product.id, quantity: 1 });
+    }
+
+    // Save updated cart
+    localStorage.setItem("cart", JSON.stringify(cart));
+
+    // Redirect to cart page
+    router.push("/cart");
   };
 
   return (
@@ -321,6 +344,17 @@ export default function Products() {
                       ? filteredProducts[index].sizesArray.join(" • ")
                       : "—"}
                   </p>
+
+                  {/* 🛒 Add to Cart Button */}
+                  <div className="mt-4">
+                    <button
+                      className="btn btn-success w-100 py-2"
+                      onClick={() => handleAddToCart(filteredProducts[index])}
+                      disabled={filteredProducts[index].stock === 0}
+                    >
+                      🛒 Add to Cart
+                    </button>
+                  </div>
 
                   <div className="d-flex justify-content-between mt-4">
                     <button

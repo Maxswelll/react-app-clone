@@ -20,10 +20,25 @@ export default function Pagination({
       } else if (currentPage >= totalPages - 2) {
         pages.push(1, "...", totalPages - 2, totalPages - 1, totalPages);
       } else {
-        pages.push(1, "...", currentPage, "...", totalPages);
+        pages.push(
+          1,
+          "...",
+          currentPage - 1,
+          currentPage,
+          currentPage + 1,
+          "...",
+          totalPages
+        );
       }
     }
     return pages;
+  };
+
+  // ✅ Add missing handler
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages && page !== currentPage) {
+      setCurrentPage(page);
+    }
   };
 
   return (
@@ -48,32 +63,38 @@ export default function Pagination({
       {/* Page numbers */}
       <nav>
         <ul className="pagination mb-0">
+          {/* Previous Button */}
           <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
             <button
               className="page-link"
-              onClick={() => setCurrentPage(currentPage - 1)}
+              onClick={() => handlePageChange(currentPage - 1)}
             >
               <FaChevronLeft />
             </button>
           </li>
 
+          {/* Page Buttons */}
           {getPages().map((p, idx) =>
             p === "..." ? (
-              <li key={idx} className="page-item disabled">
+              <li key={`ellipsis-${idx}`} className="page-item disabled">
                 <span className="page-link">...</span>
               </li>
             ) : (
               <li
-                key={p}
+                key={`page-${p}-${idx}`}
                 className={`page-item ${currentPage === p ? "active" : ""}`}
               >
-                <button className="page-link" onClick={() => setCurrentPage(p)}>
+                <button
+                  className="page-link"
+                  onClick={() => handlePageChange(p)}
+                >
                   {p}
                 </button>
               </li>
             )
           )}
 
+          {/* Next Button */}
           <li
             className={`page-item ${
               currentPage === totalPages ? "disabled" : ""
@@ -81,7 +102,7 @@ export default function Pagination({
           >
             <button
               className="page-link"
-              onClick={() => setCurrentPage(currentPage + 1)}
+              onClick={() => handlePageChange(currentPage + 1)}
             >
               <FaChevronRight />
             </button>
@@ -100,9 +121,8 @@ export default function Pagination({
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               const page = Number(e.target.value);
-              if (page >= 1 && page <= totalPages) {
-                setCurrentPage(page);
-              }
+              handlePageChange(page);
+              e.target.value = "";
             }
           }}
         />
