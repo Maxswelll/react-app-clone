@@ -62,7 +62,7 @@ const Sidebar = ({ activeMenu, setActiveMenu }) => {
                 color: activeMenu === key ? "#fff" : "#374151",
                 boxShadow:
                   activeMenu === key
-                    ? "0 4px 15px #667eea4d"
+                    ? "0 4px 15px #1131c04d"
                     : "0 0 0 transparent",
                 display: "flex",
                 alignItems: "center",
@@ -74,6 +74,12 @@ const Sidebar = ({ activeMenu, setActiveMenu }) => {
                 fontWeight: "500",
                 margin: "0 15px",
               }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.transform = "scale(1.03)")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.transform = "scale(1)")
+              }
             >
               <Icon size={22} /> {label}
             </div>

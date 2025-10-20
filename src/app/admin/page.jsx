@@ -1,7 +1,7 @@
 "use client";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import Header from "./components/header";
 import Sidebar from "./components/sidebar";
@@ -9,32 +9,48 @@ import BatchManagement from "./components/BatchManagement";
 import IncomeManagement from "./components/IncomeManagment";
 import ExpenseManagement from "./components/ExpensesManagment";
 import Expenses from "./components/expensesData";
-import StockManagment from "./components/stockManagment"; // ✅ use this component
+import StockManagment from "./components/stockManagment"; 
 
-import productsData from "./components/items"; // fallback
+import productsData from "./components/items";
 
 export default function AdminPage() {
   const router = useRouter();
   const [products] = useState(productsData);
   const [activeMenu, setActiveMenu] = useState("stock");
 
-  const handleLogout = () => router.push("/login?logout=success");
+  // ✅ State to track access
+  const [hasAccess, setHasAccess] = useState(false);
 
-  // ✅ Page switch
+  useEffect(() => {
+    const username = localStorage.getItem("username");
+    const tokenExpiry = localStorage.getItem("tokenExpiry");
+
+    if (username === "Heang" && tokenExpiry && Date.now() <= parseInt(tokenExpiry)) {
+      setHasAccess(true); // allow access
+    } else {
+      alert("Access denied: Admins only");
+      router.push("/login"); // redirect immediately
+    }
+  }, [router]);
+
+  // Only render admin content if hasAccess
+  if (!hasAccess) return null; // hide everything
+
+  const handleLogout = () => {
+    localStorage.clear();
+    router.push("/login?logout=success");
+  };
+
   const renderContent = () => {
     switch (activeMenu) {
       case "stock":
-        return <StockManagment products={products} />; // 
-
+        return <StockManagment products={products} />;
       case "batch":
         return <BatchManagement products={products} />;
-
       case "expense":
         return <ExpenseManagement Expenses={Expenses} />;
-
       case "income":
         return <IncomeManagement products={products} />;
-
       default:
         return null;
     }

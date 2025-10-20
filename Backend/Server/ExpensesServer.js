@@ -1,25 +1,16 @@
-// ExpensesServer.js
+// Server/ExpensesServer.js
 import express from "express";
-import cors from "cors";
 import pkg from "pg";
 
 const { Pool } = pkg;
-const app = express();
+const router = express.Router();
 
-// ====================
-// Middleware
-// ====================
-app.use(cors());
-app.use(express.json());
-
-// ====================
 // PostgreSQL connection
-// ====================
 const pool = new Pool({
   user: "postgres",
   host: "localhost",
-  database: "BabyOutFit", // change if your DB name differs
-  password: "12345678", // change if needed
+  database: "BabyOutFit",
+  password: "12345678",
   port: 5432,
 });
 
@@ -28,12 +19,10 @@ pool
   .then(() => console.log("✅ Connected to PostgreSQL (Expenses DB)"))
   .catch((err) => console.error("❌ DB connection error", err));
 
-// ====================
-// 💰 EXPENSES API
-// ====================
+//  EXPENSES API
 
 // Get all expenses (with optional filters: type, search, date range)
-app.get("/api/expenses", async (req, res) => {
+router.get("/expenses", async (req, res) => {
   try {
     const { type, search, fromDate, toDate } = req.query;
 
@@ -70,8 +59,8 @@ app.get("/api/expenses", async (req, res) => {
   }
 });
 
-// ✅ Add expense
-app.post("/api/expenses", async (req, res) => {
+//  Add expense
+router.post("/expenses", async (req, res) => {
   const { type, price, description, date } = req.body;
 
   try {
@@ -93,8 +82,8 @@ app.post("/api/expenses", async (req, res) => {
   }
 });
 
-// ✅ Update expense
-app.put("/api/expenses/:id", async (req, res) => {
+//  Update expense
+router.put("/expenses/:id", async (req, res) => {
   const { id } = req.params;
   const { type, price, description, date } = req.body;
 
@@ -117,8 +106,8 @@ app.put("/api/expenses/:id", async (req, res) => {
   }
 });
 
-// ✅ Delete expense
-app.delete("/api/expenses/:id", async (req, res) => {
+//  Delete expense
+router.delete("/expenses/:id", async (req, res) => {
   const { id } = req.params;
   try {
     const result = await pool.query(
@@ -138,9 +127,4 @@ app.delete("/api/expenses/:id", async (req, res) => {
   }
 });
 
-// ====================
-// Start server
-// ====================
-app.listen(5001, () => {
-  console.log("✅ Expenses Server running at http://localhost:5001");
-});
+export default router;

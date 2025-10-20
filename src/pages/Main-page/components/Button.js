@@ -52,7 +52,7 @@ export default function Log() {
       {!token && (
         <button
           type="button"
-          class="btn btn-outline-info"
+          className="btn btn-outline-info"
           onClick={handleSignUp}
           style={{ padding: "7px", cursor: "pointer" }}
         >

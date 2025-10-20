@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { VscAccount } from "react-icons/vsc";
 import { CiLock } from "react-icons/ci";
@@ -11,59 +11,80 @@ export default function LoginPage() {
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-
-  // Show toast if redirected from logout
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("logout") === "success") {
-        toast.success("Logged out successfully!", { position: "top-center" });
-      }
-    }
-  }, []);
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setLoading(true);
+
+    if (!userId || !password) {
+      toast.warning("Please fill in both fields.", { position: "top-center" });
+      setLoading(false);
+      return;
+    }
 
     try {
-      const res = await fetch("http://localhost:5003/api/login", {
+      const res = await fetch("http://localhost:5000/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: userId,
-          password: password,
-        }),
+        body: JSON.stringify({ username: userId, password }),
       });
 
       const data = await res.json();
+      console.log("🧾 Login response:", data);
 
       if (res.ok) {
-        // ✅ Save token & username
+        // Save token and user info
         localStorage.setItem("token", data.token);
-        localStorage.setItem("username", userId);
+        localStorage.setItem("username", data.username);
+        localStorage.setItem("role", data.role);
+
+        // Save token expiry (1 hour)
+        const expiryTime = Date.now() + 60 * 60 * 1000;
+        localStorage.setItem("tokenExpiry", expiryTime.toString());
 
         toast.success("Login successful!", { position: "top-center" });
 
+        // ✅ Fetch role-based message automatically
+        const authHeader = { Authorization: `Bearer ${data.token}` };
+
+        // If admin, fetch /api/admin
+        if (data.role === "admin") {
+          const adminRes = await fetch("http://localhost:5000/api/admin/admin", {
+            headers: authHeader,
+          });
+          const adminData = await adminRes.json();
+          console.log("Admin Route:", adminData);
+        } else {
+          // Otherwise, fetch /api/user
+          const userRes = await fetch("http://localhost:5000/api/admin/user", {
+            headers: authHeader,
+          });
+          const userData = await userRes.json();
+          console.log("User Route:", userData);
+        }
+
+        // Redirect after short delay
         setTimeout(() => {
-          window.location.href = "/Main-page"; // redirect to dashboard
+          window.location.href = "/Main-page";
         }, 1500);
       } else {
-        toast.error(data.message || "Invalid User ID or Password!", {
+        toast.error(data.message || "Invalid username or password!", {
           position: "top-center",
         });
       }
     } catch (err) {
-      console.error("Login error:", err);
+      console.error("❌ Login error:", err);
       toast.error("Server error. Try again later.", { position: "top-center" });
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div
       className="d-flex justify-content-center align-items-center vh-100"
-      style={{
-        background: "linear-gradient(135deg, #667eea, #764ba2)",
-      }}
+      style={{ background: "linear-gradient(135deg, #667eea, #764ba2)" }}
     >
       <div
         className="card shadow-lg p-4"
@@ -106,7 +127,7 @@ export default function LoginPage() {
                 className="form-control"
                 placeholder="Enter your user ID"
                 value={userId}
-                onChange={(e) => setUserId(e.target.value)}
+                onChange={(e) => setUserId(e.target.value.trim())} // trim spaces
                 required
               />
             </div>
@@ -114,8 +135,7 @@ export default function LoginPage() {
 
           <div className="mb-3">
             <label htmlFor="password" className="text-danger">
-              *{" "}
-              <span className="form-label fw-semibold text-dark">Password</span>
+              * <span className="form-label fw-semibold text-dark">Password</span>
             </label>
             <div className="input-group">
               <span className="input-group-text bg-light">
@@ -141,11 +161,7 @@ export default function LoginPage() {
           </div>
 
           <div className="mb-3 form-check">
-            <input
-              type="checkbox"
-              className="form-check-input"
-              id="rememberMe"
-            />
+            <input type="checkbox" className="form-check-input" id="rememberMe" />
             <label className="form-check-label" htmlFor="rememberMe">
               Remember me
             </label>
@@ -154,17 +170,14 @@ export default function LoginPage() {
           <button
             type="submit"
             className="btn btn-primary w-100 fw-semibold"
-            style={{
-              background: "linear-gradient(135deg, #667eea, #764ba2)",
-              border: "none",
-            }}
+            style={{ background: "linear-gradient(135deg, #667eea, #764ba2)", border: "none" }}
+            disabled={loading}
           >
-            Sign In
+            {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
       </div>
 
-      {/* Toast container */}
       <ToastContainer />
     </div>
   );

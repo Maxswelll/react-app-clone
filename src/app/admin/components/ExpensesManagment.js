@@ -25,7 +25,7 @@ import ExpenseStatCards from "./ExpensesCard";
 
 // ---- use correct API base for ExpensesServer ----
 const API_BASE =
-  process.env.NEXT_PUBLIC_EXPENSES_API || "http://localhost:5001";
+  process.env.NEXT_PUBLIC_EXPENSES_API || "http://localhost:5000";
 
 export default function ExpenseManagement() {
   const [expenses, setExpenses] = useState([]);
@@ -60,7 +60,7 @@ export default function ExpenseManagement() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${API_BASE}/api/expenses`);
+      const res = await fetch(`${API_BASE}/api/expenses/expenses`);
       if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
       const data = await res.json();
       setExpenses(data.map(normalize));

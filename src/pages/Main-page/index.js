@@ -1,24 +1,39 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./style.css";
 import Header from "./components/header";
-// import Filters from "./components/filter";
-import Log from "./components/Button";
+import Log from "./components/Button"; // Login/Logout button
 import Products from "./components/products";
-// import Footer from "./components/footer";
-import Admin from "./components/Button";
-// import SignupPage from "@/app/Signup/SignupPage";
+import Admin from "./components/Button"; // Admin button (role-based)
 
 function BabyOutfitPage() {
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    // Check role from localStorage
+    const role = localStorage.getItem("role");
+    const tokenExpiry = localStorage.getItem("tokenExpiry");
+
+    if (
+      role === "admin" &&
+      tokenExpiry &&
+      Date.now() <= parseInt(tokenExpiry)
+    ) {
+      setIsAdmin(true);
+    } else {
+      setIsAdmin(false);
+    }
+  }, []);
+
   return (
     <div>
       <Header />
       <Log />
-      <Admin />
-      {/* <SignupPage /> */}
-      {/* <Filters /> */}
+
+      {/* Only show Admin button for admins */}
+      {isAdmin && <Admin />}
+
       <Products />
-      {/* <Footer /> */}
     </div>
   );
 }

@@ -41,7 +41,7 @@ function colorFromString(s) {
 export default function IncomeManagement() {
   // API endpoint (change if your server runs elsewhere)
   const API_URL =
-    process.env.NEXT_PUBLIC_INCOME_API || "http://localhost:5002/api/income";
+    process.env.NEXT_PUBLIC_INCOME_API || "http://localhost:5000/api/income";
 
   const [data, setData] = useState([]); // will be loaded from backend
   const [filterDate, setFilterDate] = useState("");

@@ -21,11 +21,10 @@ export default function Products() {
 
   // ✅ Fetch products from backend
   useEffect(() => {
-    fetch("http://localhost:5000/api/items")
+    fetch("http://localhost:5000/api/stock/items")
       .then((res) => res.json())
       .then((data) => {
         const fixedData = data.map((item) => {
-          // ✅ Clean up sizes
           let sizesArray = [];
           if (Array.isArray(item.sizes)) {
             sizesArray = item.sizes.map((s) =>
@@ -44,7 +43,6 @@ export default function Products() {
               .filter((s) => s !== "");
           }
 
-          // ✅ Add formatted discount
           let discountLabel;
           if (!isNaN(item.discount) && item.discount > 0) {
             discountLabel = `${item.discount}% OFF`;
@@ -64,7 +62,6 @@ export default function Products() {
       });
   }, []);
 
-  // ✅ Filtering logic
   const filteredProducts = items.filter((p) => {
     const matchSearch = p.name?.toLowerCase().includes(search.toLowerCase());
     const matchType = type ? p.type === type : true;
@@ -74,7 +71,6 @@ export default function Products() {
     let matchStock = true;
     if (stock === "in") matchStock = p.stock > 0;
     if (stock === "out") matchStock = p.stock === 0;
-
     return matchSearch && matchType && matchSize && matchStock;
   });
 
@@ -82,7 +78,6 @@ export default function Products() {
     setIndex((i) => (i < filteredProducts.length - 1 ? i + 1 : i));
   const handlePrev = () => setIndex((i) => (i > 0 ? i - 1 : i));
 
-  // --- styles ---
   const cardStyle = {
     background: "#fff",
     boxShadow: "0 2px 8px #0000000f",
@@ -126,26 +121,51 @@ export default function Products() {
   };
 
   const handleAddToCart = (product) => {
-    // Get cart from localStorage
     let cart = JSON.parse(localStorage.getItem("cart")) || [];
-
-    // Check if product already in cart
     const existing = cart.find((item) => item.id === product.id);
     if (existing) {
       existing.quantity += 1;
     } else {
       cart.push({ id: product.id, quantity: 1 });
     }
-
-    // Save updated cart
     localStorage.setItem("cart", JSON.stringify(cart));
-
-    // Redirect to cart page
     router.push("/cart");
   };
 
   return (
     <div className="container py-4">
+      {/* Animations */}
+      <style jsx>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .fade-card {
+          opacity: 0;
+          animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .modal-animate {
+          opacity: 0;
+          transform: translateY(30px);
+          animation: modalFadeIn 0.4s ease forwards;
+        }
+
+        @keyframes modalFadeIn {
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
+
       {/* Filters */}
       <Filters filters={filters} setFilters={setFilters} />
 
@@ -161,7 +181,11 @@ export default function Products() {
             </div>
           ) : (
             filteredProducts.map((product, i) => (
-              <div key={product.id} className="col-md-6 col-lg-4">
+              <div
+                key={product.id}
+                className="col-md-6 col-lg-4 fade-card"
+                style={{ animationDelay: `${i * 0.1}s` }}
+              >
                 <div
                   style={cardStyle}
                   className="d-flex align-items-center"
@@ -176,7 +200,6 @@ export default function Products() {
                     e.currentTarget.style.transform = "translateY(0)";
                   }}
                 >
-                  {/* Product Image */}
                   <div>
                     <img
                       src={
@@ -191,14 +214,11 @@ export default function Products() {
                     />
                   </div>
 
-                  {/* Product Info */}
                   <div style={{ marginLeft: "12px", flex: 1 }}>
-                    {/* Stock Badge */}
                     <span style={badgeStyle(product.stock > 0)}>
                       {product.stock > 0 ? "IN STOCK" : "OUT OF STOCK"}
                     </span>
 
-                    {/* Sizes */}
                     <p
                       style={{
                         margin: "6px 0",
@@ -219,7 +239,6 @@ export default function Products() {
                       </span>
                     </p>
 
-                    {/* Price + Discount */}
                     <div>
                       <span
                         style={{
@@ -271,7 +290,7 @@ export default function Products() {
             className="modal-dialog modal-lg modal-dialog-centered"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="modal-content border-0 rounded-4 overflow-hidden">
+            <div className="modal-content border-0 rounded-4 overflow-hidden modal-animate">
               <button
                 type="button"
                 className="btn-close position-absolute end-0 m-3"
@@ -336,7 +355,6 @@ export default function Products() {
                     )}
                   </div>
 
-                  {/* Sizes in Modal */}
                   <p style={{ marginTop: "16px" }}>
                     <strong>Available Sizes:</strong>
                     <br />
@@ -345,9 +363,23 @@ export default function Products() {
                       : "—"}
                   </p>
 
-                  {/* 🛒 Add to Cart Button */}
                   <div className="mt-4">
                     <button
+                      style={{
+                        background:
+                          "linear-gradient(135deg, #22c55e, #16a34a, #4ade80)",
+                        color: "#fff",
+                        fontWeight: "600",
+                        border: "none",
+                        boxShadow: "0 0 20px rgba(34,197,94,0.3)",
+                        transition: "all 0.3s ease",
+                      }}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.transform = "scale(1.03)")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.transform = "scale(1)")
+                      }
                       className="btn btn-success w-100 py-2"
                       onClick={() => handleAddToCart(filteredProducts[index])}
                       disabled={filteredProducts[index].stock === 0}

@@ -1,22 +1,16 @@
+// Server/AdminServer.js
 import express from "express";
-import cors from "cors";
 import pkg from "pg";
 import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const { Pool } = pkg;
-const app = express();
-const PORT = 5003;
-const JWT_SECRET = "HandsomeSuperSecretKey"; // ⚠️ Change this in production
+const router = express.Router();
+const JWT_SECRET = process.env.JWT_SECRET || "SuperStrongSecretKey";
 
-// ====================
-// Middleware
-// ====================
-app.use(cors());
-app.use(express.json());
-
-// ====================
-// PostgreSQL Connection
-// ====================
+// PostgreSQL connection
 const pool = new Pool({
   user: "postgres",
   host: "localhost",
@@ -27,14 +21,11 @@ const pool = new Pool({
 
 pool
   .connect()
-  .then(() => console.log("✅ Connected to PostgreSQL (AdminServer DB)"))
+  .then(() => console.log("✅ Connected to PostgreSQL (AdminServer)"))
   .catch((err) => console.error("❌ Database connection error:", err));
 
-// ====================
-// REGISTER ADMIN (Sign Up)
-// ====================
-app.post("/api/register", async (req, res) => {
-  const { username, password } = req.body;
+router.post("/register", async (req, res) => {
+  const { username, password, role } = req.body;
 
   if (!username || !password)
     return res.status(400).json({ message: "Username and password required" });
@@ -50,14 +41,18 @@ app.post("/api/register", async (req, res) => {
       return res.status(400).json({ message: "Username already exists" });
     }
 
-    // Insert new user (no hashing for now)
+    //  Control role: only allow "user" by default
+    // Prevent anyone from creating an "admin" through signup
+    const assignedRole = "user";
+
+    // Insert new user into the DB
     const result = await pool.query(
-      "INSERT INTO admins (username, password) VALUES ($1, $2) RETURNING id, username",
-      [username, password]
+      "INSERT INTO admins (username, password, role) VALUES ($1, $2, $3) RETURNING id, username, role",
+      [username, password, assignedRole]
     );
 
     res.json({
-      message: "Admin registered successfully",
+      message: "User registered successfully",
       user: result.rows[0],
     });
   } catch (err) {
@@ -65,11 +60,8 @@ app.post("/api/register", async (req, res) => {
     res.status(500).json({ message: "Server error during registration" });
   }
 });
-
-// ====================
-// LOGIN ADMIN
-// ====================
-app.post("/api/login", async (req, res) => {
+// Login API
+router.post("/login", async (req, res) => {
   const { username, password } = req.body;
 
   if (!username || !password)
@@ -88,28 +80,36 @@ app.post("/api/login", async (req, res) => {
     if (password !== user.password)
       return res.status(401).json({ message: "Invalid username or password" });
 
-    // ✅ Create JWT
     const token = jwt.sign(
-      { id: user.id, username: user.username },
+      { id: user.id, username: user.username, role: user.role },
       JWT_SECRET,
       { expiresIn: "1h" }
     );
 
-    // ✅ Send token + username to frontend
-    res.json({ token, username: user.username });
+    const messages = {};
+    if (user.role === "admin") {
+      messages.admin = `Welcome Admin ${user.username}`;
+    }
+    messages.user = `Welcome ${user.username} (${user.role})`;
+
+    res.json({
+      message: "Login successful",
+      token,
+      expiresIn: "1h",
+      username: user.username,
+      role: user.role,
+      messages,
+    });
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ message: "Server error during login" });
   }
 });
 
-// ====================
-// Middleware: Verify token
-// ====================
+// Middleware
 function authenticateToken(req, res, next) {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
-
   if (!token) return res.status(401).json({ message: "Missing token" });
 
   jwt.verify(token, JWT_SECRET, (err, user) => {
@@ -120,16 +120,20 @@ function authenticateToken(req, res, next) {
   });
 }
 
-// ====================
-// Protected route
-// ====================
-app.get("/api/admin-only", authenticateToken, (req, res) => {
+function adminOnly(req, res, next) {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ message: "Access denied: Admins only" });
+  }
+  next();
+}
+
+// Routes
+router.get("/admin", authenticateToken, adminOnly, (req, res) => {
   res.json({ message: `Welcome Admin ${req.user.username}` });
 });
 
-// ====================
-// Start Server
-// ====================
-app.listen(PORT, () => {
-  console.log(`✅ AdminServer running at http://localhost:${PORT}`);
+router.get("/user", authenticateToken, (req, res) => {
+  res.json({ message: `Welcome ${req.user.username} (${req.user.role})` });
 });
+
+export default router;
