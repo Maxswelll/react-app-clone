@@ -13,7 +13,7 @@ export default function Checkout() {
 
   // Fetch products
   useEffect(() => {
-    fetch("http://localhost:5000/api/stock/items")
+    fetch("http://localhost:5001/items")
       .then((res) => res.json())
       .then((data) => {
         setProducts(data);

@@ -40,7 +40,7 @@ export default function BatchManagement() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/stock/items");
+        const res = await fetch("http://localhost:5000/items");
         const data = await res.json();
 
         // ✅ Clean all sizes immediately

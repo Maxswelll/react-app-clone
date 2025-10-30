@@ -18,7 +18,7 @@ export default function StockManagment() {
   // ✅ Fetch products from backend
   const fetchProducts = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/stock/items");
+      const res = await fetch("http://localhost:5000/items");
 
       if (!res.ok) throw new Error("Backend not available");
       const data = await res.json();
@@ -41,14 +41,11 @@ export default function StockManagment() {
   // ✅ Edit product
   const editProduct = async (updated) => {
     try {
-      const res = await fetch(
-        `http://localhost:5000/api/stock/items/${updated.id}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(updated),
-        }
-      );
+      const res = await fetch(`http://localhost:5000/items/${updated.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updated),
+      });
       if (res.ok) {
         fetchProducts();
         setEditingProduct(null);
@@ -61,7 +58,7 @@ export default function StockManagment() {
   // ✅ Delete product
   const deleteProduct = async (id) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/stock/items/${id}`, {
+      const res = await fetch(`http://localhost:5000/items/${id}`, {
         method: "DELETE",
       });
       if (res.ok) fetchProducts();

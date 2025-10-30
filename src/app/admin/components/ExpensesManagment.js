@@ -60,7 +60,7 @@ export default function ExpenseManagement() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${API_BASE}/api/expenses/expenses`);
+      const res = await fetch(`${API_BASE}/expenses`);
       if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
       const data = await res.json();
       setExpenses(data.map(normalize));
@@ -90,7 +90,7 @@ export default function ExpenseManagement() {
         date: newExpense.date, // plain YYYY-MM-DD
       };
 
-      const res = await fetch(`${API_BASE}/api/expenses`, {
+      const res = await fetch(`${API_BASE}/expenses`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -129,7 +129,7 @@ export default function ExpenseManagement() {
         date: editingExpense.date, // plain YYYY-MM-DD
       };
 
-      const res = await fetch(`${API_BASE}/api/expenses/${editingExpense.id}`, {
+      const res = await fetch(`${API_BASE}/expenses/${editingExpense.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -150,7 +150,7 @@ export default function ExpenseManagement() {
   const handleDelete = async (id) => {
     if (!confirm("Delete this expense?")) return;
     try {
-      const res = await fetch(`${API_BASE}/api/expenses/${id}`, {
+      const res = await fetch(`${API_BASE}/expenses/${id}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Delete failed");

@@ -29,7 +29,7 @@ export default function PaymentPage() {
       return;
     }
 
-    fetch("http://localhost:5000/api/stock/items")
+    fetch("http://localhost:5000/items")
       .then((res) => res.json())
       .then((data) => {
         const fullProducts = cartItems
@@ -65,7 +65,7 @@ export default function PaymentPage() {
   const handleConfirmPaid = async () => {
   try {
     // Update stock in backend
-    await fetch("http://localhost:5000/api/stock/items/update-stock", {
+    await fetch("http://localhost:5000/items/update-stock", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

@@ -29,7 +29,7 @@ export default function CartPage() {
       return;
     }
 
-    fetch("http://localhost:5000/api/stock/items")
+    fetch("http://localhost:5000/items")
       .then((res) => res.json())
       .then((data) => {
         const fullProducts = cartItems
@@ -236,7 +236,7 @@ export default function CartPage() {
                       item.image
                         ? item.image.startsWith("http")
                           ? item.image
-                          : `http://localhost:5000${item.image}`
+                          : `http://localhost:5001${item.image}`
                         : "/default-image.png"
                     }
                     alt={item.name}

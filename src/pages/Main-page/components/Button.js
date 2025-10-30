@@ -11,7 +11,6 @@ export default function Log() {
   const [token, setToken] = useState(null);
 
   useEffect(() => {
-    // ✅ Load username and token from localStorage
     const storedUser = localStorage.getItem("username");
     const storedToken = localStorage.getItem("token");
 
@@ -25,60 +24,72 @@ export default function Log() {
   }, []);
 
   const handleLogout = () => {
-    // ✅ Clear session
     localStorage.removeItem("token");
     localStorage.removeItem("username");
     setUsername(null);
     setToken(null);
-
-    // Redirect to login page
     router.push("/login?logout=success");
   };
 
-  const handleAdmin = () => {
-    router.push("/admin");
-  };
-
-  const handleSignUp = () => {
-    router.push("/signup"); // ✅ Redirect to sign-up page
-  };
+  const handleAdmin = () => router.push("/admin");
+  const handleSignUp = () => router.push("/signup");
 
   return (
     <div
-      className="position-absolute top-0 end-0 m-3 d-flex"
-      style={{ gap: "10px" }}
+      className="position-absolute top-0 end-0 m-3 d-flex flex-wrap justify-content-end align-items-center"
+      style={{
+        gap: "10px",
+        zIndex: 1050,
+        maxWidth: "100%",
+      }}
     >
-      {/* ✅ If not logged in → Show Sign Up button */}
+      {/* ✅ Show Sign Up if not logged in */}
       {!token && (
         <button
           type="button"
-          className="btn btn-outline-info"
+          className="btn btn-outline-info d-flex align-items-center justify-content-center"
           onClick={handleSignUp}
-          style={{ padding: "7px", cursor: "pointer" }}
+          style={{
+            padding: "6px 10px",
+            minWidth: "90px",
+            fontSize: "14px",
+            whiteSpace: "nowrap",
+          }}
         >
-          Sign Up <TbPlayerTrackNextFilled size={20} height={7} />
+          <span className="me-1">Sign Up</span>
+          <TbPlayerTrackNextFilled size={18} />
         </button>
       )}
 
-      {/* ✅ If logged in → Show Admin (only for Heang) + Logout */}
+      {/* ✅ Show Admin + Logout if logged in */}
       {token && (
         <>
           {username === "Heang" && (
             <button
-              className="btn btn-primary rounded-3"
+              className="btn btn-primary d-flex align-items-center justify-content-center rounded-3"
               onClick={handleAdmin}
-              style={{ padding: "7px", cursor: "pointer" }}
+              style={{
+                padding: "6px 10px",
+                minWidth: "90px",
+                fontSize: "14px",
+                whiteSpace: "nowrap",
+              }}
             >
-              <IoSpeedometerOutline size={20} /> Admin
+              <IoSpeedometerOutline size={18} className="me-1" /> Admin
             </button>
           )}
 
           <button
-            className="btn btn-outline-danger rounded-3"
+            className="btn btn-outline-danger d-flex align-items-center justify-content-center rounded-3"
             onClick={handleLogout}
-            style={{ padding: "7px", cursor: "pointer" }}
+            style={{
+              padding: "6px 10px",
+              minWidth: "90px",
+              fontSize: "14px",
+              whiteSpace: "nowrap",
+            }}
           >
-            <IoMdLogOut size={20} /> Logout
+            <IoMdLogOut size={18} className="me-1" /> Logout
           </button>
         </>
       )}

@@ -129,15 +129,12 @@ export default function ProductToolbar({
 
       let res;
       if (editingProduct) {
-        res = await fetch(
-          `http://localhost:5000/api/stock/items/${editingProduct.id}`,
-          {
-            method: "PUT",
-            body: formDataToSend,
-          }
-        );
+        res = await fetch(`http://localhost:5001/items/${editingProduct.id}`, {
+          method: "PUT",
+          body: formDataToSend,
+        });
       } else {
-        res = await fetch("http://localhost:5000/api/stock/items", {
+        res = await fetch("http://localhost:5001/items", {
           method: "POST",
           body: formDataToSend,
         });

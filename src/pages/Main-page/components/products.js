@@ -4,6 +4,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import Filters from "./filter";
 import Footer from "./footer";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 
 export default function Products() {
   const router = useRouter();
@@ -21,9 +22,10 @@ export default function Products() {
 
   // ✅ Fetch products from backend
   useEffect(() => {
-    fetch("http://localhost:5000/api/stock/items")
-      .then((res) => res.json())
-      .then((data) => {
+    axios
+      .get("http://localhost:5000/items")
+      .then((res) => {
+        const data = res.data;
         const fixedData = data.map((item) => {
           let sizesArray = [];
           if (Array.isArray(item.sizes)) {

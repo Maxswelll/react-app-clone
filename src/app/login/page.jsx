@@ -24,7 +24,7 @@ export default function LoginPage() {
     }
 
     try {
-      const res = await fetch("http://localhost:5000/api/admin/login", {
+      const res = await fetch("http://localhost:5000/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: userId, password }),
@@ -50,14 +50,14 @@ export default function LoginPage() {
 
         // If admin, fetch /api/admin
         if (data.role === "admin") {
-          const adminRes = await fetch("http://localhost:5000/api/admin/admin", {
+          const adminRes = await fetch("http://localhost:5000/admin", {
             headers: authHeader,
           });
           const adminData = await adminRes.json();
           console.log("Admin Route:", adminData);
         } else {
           // Otherwise, fetch /api/user
-          const userRes = await fetch("http://localhost:5000/api/admin/user", {
+          const userRes = await fetch("http://localhost:5000/user", {
             headers: authHeader,
           });
           const userData = await userRes.json();
