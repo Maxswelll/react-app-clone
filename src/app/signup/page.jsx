@@ -43,8 +43,10 @@ export default function SignupPage() {
         }, 1500);
       } else {
         toast.error(data.message || "Failed to register user.", {
+        
           position: "top-center",
         });
+      
       }
     } catch (err) {
       console.error("Signup error:", err);

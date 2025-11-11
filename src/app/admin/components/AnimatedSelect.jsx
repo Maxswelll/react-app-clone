@@ -1,0 +1,88 @@
+"use client";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
+import { IoChevronDown } from "react-icons/io5";
+
+export default function AnimatedSelect({ value, onChange, options }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div style={{ position: "relative", width: "220px" }}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="form-select"
+        style={{
+          cursor: "pointer",
+          padding: "10px 14px",
+          borderRadius: "10px",
+          border: "1px solid #ddd",
+          background: "rgba(255,255,255,0.75)",
+          backdropFilter: "blur(6px)",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          fontWeight: "500",
+          boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+        }}
+      >
+        {value}
+
+        <motion.span
+          animate={{ rotate: open ? 180 : 0 }}
+          transition={{ duration: 0.25 }}
+        >
+          <IoChevronDown size={18} />
+        </motion.span>
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, height: 0, y: -5 }}
+            animate={{ opacity: 1, height: "auto", y: 0 }}
+            exit={{ opacity: 0, height: 0, y: -5 }}
+            transition={{ duration: 0.35 }}
+            style={{
+              position: "absolute",
+              width: "100%",
+              marginTop: "6px",
+              background: "rgba(255,255,255,0.95)",
+              backdropFilter: "blur(8px)",
+              borderRadius: "10px",
+              overflow: "hidden",
+              boxShadow: "0 6px 18px rgba(0,0,0,0.12)",
+              border: "1px solid #e2e2e2",
+              zIndex: 999,
+            }}
+          >
+            {options.map((opt) => (
+              <div
+                key={opt}
+                onClick={() => {
+                  onChange(opt);
+                  setOpen(false);
+                }}
+                style={{
+                  padding: "10px 14px",
+                  cursor: "pointer",
+                  fontWeight: opt === value ? "600" : "400",
+                  background: opt === value ? "rgba(0,0,0,0.05)" : "transparent",
+                  transition: "0.2s",
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.background = "rgba(0,0,0,0.07)")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.background =
+                    opt === value ? "rgba(0,0,0,0.05)" : "transparent")
+                }
+              >
+                {opt}
+              </div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}

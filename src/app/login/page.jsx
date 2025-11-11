@@ -27,13 +27,20 @@ export default function LoginPage() {
       const res = await fetch("http://localhost:5000/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: userId, password }),
+        body: JSON.stringify({ username: userId.trim(), password }),
       });
 
       const data = await res.json();
       console.log("🧾 Login response:", data);
 
       if (res.ok) {
+        // Only 'user' or 'admin' roles allowed
+        if (data.role !== "user" && data.role !== "admin") {
+          toast.error("Access denied: only user or admin can log in", { position: "top-center" });
+          setLoading(false);
+          return;
+        }
+
         // Save token and user info
         localStorage.setItem("token", data.token);
         localStorage.setItem("username", data.username);
@@ -45,33 +52,10 @@ export default function LoginPage() {
 
         toast.success("Login successful!", { position: "top-center" });
 
-        // ✅ Fetch role-based message automatically
-        const authHeader = { Authorization: `Bearer ${data.token}` };
-
-        // If admin, fetch /api/admin
-        if (data.role === "admin") {
-          const adminRes = await fetch("http://localhost:5000/admin", {
-            headers: authHeader,
-          });
-          const adminData = await adminRes.json();
-          console.log("Admin Route:", adminData);
-        } else {
-          // Otherwise, fetch /api/user
-          const userRes = await fetch("http://localhost:5000/user", {
-            headers: authHeader,
-          });
-          const userData = await userRes.json();
-          console.log("User Route:", userData);
-        }
-
         // Redirect after short delay
         setTimeout(() => {
           window.location.href = "/Main-page";
         }, 1500);
-      } else {
-        toast.error(data.message || "Invalid username or password!", {
-          position: "top-center",
-        });
       }
     } catch (err) {
       console.error("❌ Login error:", err);

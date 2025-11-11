@@ -22,12 +22,24 @@ export default function Products() {
 
   // ✅ Fetch products from backend
   useEffect(() => {
-    axios
-      .get("http://localhost:5000/items")
-      .then((res) => {
-        const data = res.data;
-        const fixedData = data.map((item) => {
+    let currentPage = 1;
+    let isFetching = false;
+    let hasMore = true;
+
+    const fetchItems = async () => {
+      if (isFetching || !hasMore) return;
+      isFetching = true;
+
+      try {
+        const res = await axios.get(
+          `http://localhost:5000/items?page=${currentPage}&limit=10`
+        );
+        const result = res.data;
+        const itemsData = result.data || [];
+
+        const fixedData = itemsData.map((item) => {
           let sizesArray = [];
+
           if (Array.isArray(item.sizes)) {
             sizesArray = item.sizes.map((s) =>
               String(s)
@@ -45,23 +57,47 @@ export default function Products() {
               .filter((s) => s !== "");
           }
 
-          let discountLabel;
-          if (!isNaN(item.discount) && item.discount > 0) {
-            discountLabel = `${item.discount}% OFF`;
-          } else {
-            discountLabel = "No discount";
-          }
+          const discountLabel =
+            !isNaN(item.discount) && item.discount > 0
+              ? `${item.discount}% OFF`
+              : "No discount";
 
           return { ...item, sizesArray, discountLabel };
         });
 
-        setItems(fixedData);
+        // ✅ Append instead of replace
+        setItems((prev) => [...prev, ...fixedData]);
         setLoading(false);
-      })
-      .catch((err) => {
+
+        hasMore = result.hasMore;
+        if (result.hasMore && result.nextPage) {
+          currentPage = result.nextPage;
+        } else {
+          hasMore = false;
+        }
+      } catch (err) {
         console.error("Error fetching products:", err);
         setLoading(false);
-      });
+      } finally {
+        isFetching = false;
+      }
+    };
+
+    // ✅ Initial load
+    fetchItems();
+
+    // ✅ Scroll event listener
+    const handleScroll = () => {
+      if (
+        window.innerHeight + window.scrollY >=
+        document.body.offsetHeight - 300
+      ) {
+        fetchItems();
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const filteredProducts = items.filter((p) => {

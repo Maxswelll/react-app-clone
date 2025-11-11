@@ -1,4 +1,3 @@
-// IncomeManagement.jsx
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
 import {
@@ -12,43 +11,52 @@ import {
 } from "react-bootstrap";
 import { motion } from "framer-motion";
 import { CiEdit } from "react-icons/ci";
-import { AiOutlineDelete } from "react-icons/ai";
+import {
+  AiOutlineDelete,
+  AiOutlineDollarCircle,
+  AiOutlineArrowUp,
+  AiOutlineArrowDown,
+} from "react-icons/ai";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
-import { AiOutlineDollarCircle } from "react-icons/ai";
 import { BsPeople } from "react-icons/bs";
-import { AiOutlineArrowUp, AiOutlineArrowDown } from "react-icons/ai";
 
-// Uppercase profile name with logic
+// ---------------------
+// Utils
+// ---------------------
 function initials(name = "") {
   const parts = name.split(" ").filter(Boolean);
   if (parts.length === 0) return "?";
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[1][0]).toUpperCase();
 }
-// return linear-gradient bg color random
+
 function colorFromString(s) {
   let h = 0;
-  for (let i = 0; i < s.length; i++) {
-    h = (h << 5) - h + s.charCodeAt(i);
-    h |= 0;
-  }
+  for (let i = 0; i < s.length; i++) h = (h << 5) - h + s.charCodeAt(i);
+  h |= 0;
   const hue = Math.abs(h) % 360;
   return `linear-gradient(135deg,hsl(${hue} 70% 50%), hsl(${
     (hue + 30) % 360
   } 70% 45%))`;
 }
 
+function qtyLabel(n) {
+  return `${n} item${n > 1 ? "s" : ""}`;
+}
+
+// ---------------------
+// Main Component
+// ---------------------
 export default function IncomeManagement() {
-  // API endpoint (change if your server runs elsewhere)
   const API_URL =
     process.env.NEXT_PUBLIC_INCOME_API || "http://localhost:5000/income";
 
-  const [data, setData] = useState([]); // will be loaded from backend
+  const [data, setData] = useState([]);
   const [filterDate, setFilterDate] = useState("");
   const [search, setSearch] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: "date", dir: "desc" });
 
-  // modal state
+  // modal
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({
@@ -62,45 +70,46 @@ export default function IncomeManagement() {
   // pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
   const [goToValue, setGoToValue] = useState("");
 
-  // -------------------------
-  // Backend interaction
-  // -------------------------
+  // ---------------------
+  // Fetch data from backend (with pagination + search)
+  // ---------------------
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [currentPage, itemsPerPage, search]);
 
   async function fetchData() {
     try {
-      const res = await fetch(API_URL);
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: itemsPerPage.toString(),
+        search: search.trim(),
+      });
+      const res = await fetch(`${API_URL}?${params.toString()}`);
       if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
       const json = await res.json();
-      // Normalize rows: ensure quantity & total are numbers and date is YYYY-MM-DD
-      const normalized = json.map((r) => ({
-        id: r.id,
-        customer: r.customer || "",
-        quantity: Number(r.quantity || 0),
-        total: Number(r.total || 0),
-        date: r.date || "", // backend returns YYYY-MM-DD
-      }));
-      setData(normalized);
+      setData(json.data || []);
+      setTotalPages(json.totalPages || 1);
     } catch (err) {
       console.error("Failed to load income data:", err);
     }
   }
 
+  // ---------------------
+  // Save form
+  // ---------------------
   async function saveForm(e) {
     e.preventDefault();
-
-    // validate minimal
-    if (!form.customer || !form.date || !form.total) return;
+    if (!form.customer || !form.date || !form.total)
+      return alert("Please fill all fields");
 
     const payload = {
       customer: form.customer,
-      quantity: Number(form.quantity || 0),
-      total: Number(form.total || 0),
-      date: form.date, // plain YYYY-MM-DD
+      quantity: Number(form.quantity),
+      total: Number(form.total),
+      date: form.date,
     };
 
     try {
@@ -112,16 +121,6 @@ export default function IncomeManagement() {
           body: JSON.stringify(payload),
         });
         if (!res.ok) throw new Error(`Update failed: ${res.status}`);
-        const updated = await res.json();
-        // normalized
-        const row = {
-          id: updated.id,
-          customer: updated.customer,
-          quantity: Number(updated.quantity || 0),
-          total: Number(updated.total || 0),
-          date: updated.date || "",
-        };
-        setData((d) => d.map((x) => (x.id === row.id ? row : x)));
       } else {
         // create
         const res = await fetch(API_URL, {
@@ -130,54 +129,45 @@ export default function IncomeManagement() {
           body: JSON.stringify(payload),
         });
         if (!res.ok) throw new Error(`Create failed: ${res.status}`);
-        const created = await res.json();
-        const row = {
-          id: created.id,
-          customer: created.customer,
-          quantity: Number(created.quantity || 0),
-          total: Number(created.total || 0),
-          date: created.date || "",
-        };
-        setData((d) => [row, ...d]);
       }
 
-      // cleanup
+      // refresh data
       setShowModal(false);
       setForm({ id: null, customer: "", quantity: 1, total: "", date: "" });
       setEditing(null);
-      setCurrentPage(1);
+      fetchData();
     } catch (err) {
       console.error("Save income error:", err);
       alert("Failed to save income (check console)");
     }
   }
 
+  // ---------------------
+  // Delete
+  // ---------------------
   async function onDelete(id) {
     if (!confirm("Delete this entry?")) return;
     try {
       const res = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
-      setData((d) => d.filter((x) => x.id !== id));
+      fetchData();
     } catch (err) {
       console.error("Delete income error:", err);
       alert("Failed to delete (check console)");
     }
   }
 
-  // -------------------------
-  // Derived stats
-  // -------------------------
+  // ---------------------
+  // Stats
+  // ---------------------
   const totals = useMemo(() => {
     const totalIncome = data.reduce((s, r) => s + Number(r.total || 0), 0);
-
     const productIncome = data
       .filter((r) => Number(r.quantity || 0) > 1)
       .reduce((s, r) => s + Number(r.total || 0), 0);
-
     const boostIncome = data
       .filter((r) => (r.customer || "").toLowerCase().includes("boost"))
       .reduce((s, r) => s + Number(r.total || 0), 0);
-
     const panhaIncome = data
       .filter((r) => (r.customer || "").toLowerCase() === "panha")
       .reduce((s, r) => s + Number(r.total || 0), 0);
@@ -191,107 +181,82 @@ export default function IncomeManagement() {
     };
   }, [data]);
 
-  // -------------------------
-  // Filtering / Sorting / Pagination
-  // -------------------------
-  const filtered = data
-    .filter((r) =>
-      search.trim()
-        ? (r.customer || "").toLowerCase().includes(search.toLowerCase())
-        : true
-    )
-    .filter((r) => (filterDate ? r.date === filterDate : true))
-    .sort((a, b) => {
-      if (!sortConfig.key) return 0;
-      let av = a[sortConfig.key];
-      let bv = b[sortConfig.key];
-      if (sortConfig.key === "date") {
-        av = new Date(av);
-        bv = new Date(bv);
-      } else {
-        av = Number(av || 0);
-        bv = Number(bv || 0);
-      }
-      if (av < bv) return sortConfig.dir === "asc" ? -1 : 1;
-      if (av > bv) return sortConfig.dir === "asc" ? 1 : -1;
-      return 0;
-    });
+  // ---------------------
+  // Sort
+  // ---------------------
+  const sorted = [...data].sort((a, b) => {
+    let av = a[sortConfig.key];
+    let bv = b[sortConfig.key];
+    if (sortConfig.key === "date") {
+      av = new Date(av);
+      bv = new Date(bv);
+    } else {
+      av = Number(av || 0);
+      bv = Number(bv || 0);
+    }
+    if (av < bv) return sortConfig.dir === "asc" ? -1 : 1;
+    if (av > bv) return sortConfig.dir === "asc" ? 1 : -1;
+    return 0;
+  });
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
-  useEffect(() => {
-    if (currentPage > totalPages) setCurrentPage(totalPages);
-  }, [totalPages, currentPage]);
-
-  const pageStart = (currentPage - 1) * itemsPerPage;
-  const pageData = filtered.slice(pageStart, pageStart + itemsPerPage);
-
-  // -------------------------
-  // UI handlers
-  // -------------------------
-  function openAdd() {
+  // ---------------------
+  // UI Handlers
+  // ---------------------
+  const openAdd = () => {
     setForm({ id: null, customer: "", quantity: 1, total: "", date: "" });
     setEditing(null);
     setShowModal(true);
-  }
-  function openEdit(item) {
-    setForm({
-      id: item.id,
-      customer: item.customer,
-      quantity: item.quantity,
-      total: item.total,
-      date: item.date,
-    });
+  };
+
+  const openEdit = (item) => {
+    setForm({ ...item });
     setEditing(item.id);
     setShowModal(true);
-  }
-  function toggleSort(key) {
-    setSortConfig((s) => {
-      if (s.key === key) {
-        return { key, dir: s.dir === "asc" ? "desc" : "asc" };
-      }
-      return { key, dir: "asc" };
-    });
-  }
+  };
 
-  function goToPageInput() {
+  const toggleSort = (key) => {
+    setSortConfig((s) =>
+      s.key === key
+        ? { key, dir: s.dir === "asc" ? "desc" : "asc" }
+        : { key, dir: "asc" }
+    );
+  };
+
+  const goToPageInput = () => {
     const p = parseInt(goToValue || "", 10);
     if (!isNaN(p) && p >= 1 && p <= totalPages) {
       setCurrentPage(p);
       setGoToValue("");
     }
-  }
+  };
 
-  function qtyLabel(n) {
-    return `${n} item${n > 1 ? "s" : ""}`;
-  }
-
-  // -------------------------
+  // ---------------------
   // Render
-  // -------------------------
+  // ---------------------
   return (
     <Container fluid className="p-3">
       {/* Title */}
       <div className="text-center text-info mb-3">
         <h2 className="mb-0 ms-2">
           <AiOutlineDollarCircle
-            style={{ marginRight: "8px", color: "#000" }}
+            style={{ marginRight: 8, color: "#000" }}
             size={35}
           />
           Income Management
         </h2>
-        <small style={{ fontSize: "15px" }} className="text-muted">
+        <small style={{ fontSize: 15 }} className="text-muted">
           Track and manage all revenue streams
         </small>
       </div>
 
-      {/* Stat cards */}
+      {/* Stat Cards */}
       <Row className="g-3 mb-3">
         {[
           {
             id: "panha",
             icon: <AiOutlineDollarCircle size={35} />,
             value: `$${totals.panhaIncome.toFixed(2)}`,
-            label: "Panha ",
+            label: "Panha",
             color:
               "linear-gradient(135deg, rgb(79, 172, 254), rgb(0, 242, 254))",
           },
@@ -340,21 +305,66 @@ export default function IncomeManagement() {
         ))}
       </Row>
 
-      {/* Add bar */}
-      <div className="bg-white rounded-3 shadow-sm p-3 mb-3 d-flex justify-content-start">
+      {/* Add Button */}
+      <div className="bg-white rounded-3 shadow-sm p-3 mb-3 d-flex flex-wrap justify-content-between align-items-center gap-3">
+        {/* Add Button */}
         <Button
           variant="primary"
           onClick={openAdd}
-          className="px-4 py-2 fw-semibold shadow-sm"
+          className="px-4 py-2 fw-semibold"
           style={{
-            background: "linear-gradient(to right, #00d2ff, #3a7bd5)",
+            background: "linear-gradient(135deg, #00d2ff, #3a7bd5)",
             border: "none",
-            borderRadius: "8px",
+            borderRadius: 12,
+            color: "#fff",
+            fontWeight: 600,
+            fontSize: "0.95rem",
+            letterSpacing: "0.5px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
             transition: "all 0.3s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.transform = "scale(1.05)";
+            e.target.style.boxShadow = "0 6px 14px rgba(0, 123, 255, 0.35)";
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.transform = "scale(1)";
+            e.target.style.boxShadow = "0 4px 10px rgba(0, 123, 255, 0.2)";
           }}
         >
           + Add Income
         </Button>
+
+        {/* Search Bar */}
+        <div className="d-flex align-items-center" style={{ gap: "10px" }}>
+          <Form.Control
+            type="text"
+            placeholder="🔍 Search by customer..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setCurrentPage(1);
+            }}
+            style={{
+              width: "260px",
+              borderRadius: "10px",
+              border: "1px solid #ddd",
+              padding: "8px 12px",
+              backgroundColor: "#fafafa",
+              transition: "transform 0.25s ease, border-color 0.25s ease",
+            }}
+            onFocus={(e) => {
+              e.target.style.transform = "scale(1.03)";
+              e.target.style.borderColor = "#3a7bd5";
+              e.target.style.backgroundColor = "#fff";
+            }}
+            onBlur={(e) => {
+              e.target.style.transform = "scale(1)";
+              e.target.style.borderColor = "#ddd";
+              e.target.style.backgroundColor = "#fafafa";
+            }}
+          />
+        </div>
       </div>
 
       {/* Table */}
@@ -363,78 +373,46 @@ export default function IncomeManagement() {
           <table className="table align-middle mb-0">
             <thead className="table-light">
               <tr>
-                <th
-                  style={{
-                    color: "#344767",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                  }}
-                >
-                  Customer
-                </th>
-                <th
-                  style={{
-                    color: "#344767",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                  }}
-                  onClick={() => toggleSort("quantity")}
-                >
+                <th>Customer</th>
+                <th onClick={() => toggleSort("quantity")}>
                   Quantity{" "}
-                  {sortConfig.key === "quantity" ? (
-                    sortConfig.dir === "asc" ? (
+                  {sortConfig.key === "quantity" &&
+                    (sortConfig.dir === "asc" ? (
                       <AiOutlineArrowUp size={14} />
                     ) : (
                       <AiOutlineArrowDown size={14} />
-                    )
-                  ) : null}
+                    ))}
                 </th>
-
-                <th
-                  style={{
-                    color: "#344767",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                  }}
-                  onClick={() => toggleSort("total")}
-                >
+                <th onClick={() => toggleSort("total")}>
                   Total Amount{" "}
-                  {sortConfig.key === "total" ? (
-                    sortConfig.dir === "asc" ? (
+                  {sortConfig.key === "total" &&
+                    (sortConfig.dir === "asc" ? (
                       <AiOutlineArrowUp size={14} />
                     ) : (
                       <AiOutlineArrowDown size={14} />
-                    )
-                  ) : null}
+                    ))}
                 </th>
-                <th
-                  style={{
-                    color: "#344767",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                  }}
-                  onClick={() => toggleSort("date")}
-                >
+                <th onClick={() => toggleSort("date")}>
                   Buy Date{" "}
-                  {sortConfig.key === "date" ? (
-                    sortConfig.dir === "asc" ? (
+                  {sortConfig.key === "date" &&
+                    (sortConfig.dir === "asc" ? (
                       <AiOutlineArrowUp size={14} />
                     ) : (
                       <AiOutlineArrowDown size={14} />
-                    )
-                  ) : null}
+                    ))}
                 </th>
-
-                <th
-                  className="text-end"
-                  style={{ fontWeight: 600, color: "#344767" }}
-                >
-                  Actions
-                </th>
+                <th className="text-end">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {pageData.map((r) => (
+              {sorted.length === 0 && (
+                <tr>
+                  <td colSpan="5" className="text-center text-muted py-4">
+                    No records found
+                  </td>
+                </tr>
+              )}
+              {sorted.map((r) => (
                 <tr key={r.id}>
                   <td>
                     <div className="d-flex align-items-center gap-2">
@@ -444,17 +422,13 @@ export default function IncomeManagement() {
                           width: 40,
                           height: 40,
                           background: colorFromString(r.customer),
-                          fontWeight: 300,
                         }}
                       >
                         {initials(r.customer)}
                       </div>
-                      <div>
-                        <div style={{ fontWeight: 500 }}>{r.customer}</div>
-                      </div>
+                      <div>{r.customer}</div>
                     </div>
                   </td>
-
                   <td>
                     <Button
                       size="sm"
@@ -462,22 +436,15 @@ export default function IncomeManagement() {
                         color: "#0958d9",
                         background: "#e6f4ff",
                         border: "2px solid #91caff",
-                        fontWeight: "600",
-                        borderRadius: "6px",
-                        padding: ".25rem .75rem",
                       }}
                     >
                       {qtyLabel(r.quantity)}
                     </Button>
                   </td>
-
                   <td style={{ fontWeight: 700 }}>
                     ${Number(r.total).toFixed(2)}
                   </td>
-
-                  {/* show date string directly to avoid timezone shift */}
                   <td>{r.date}</td>
-
                   <td className="text-end">
                     <Button
                       size="sm"
@@ -497,47 +464,33 @@ export default function IncomeManagement() {
                   </td>
                 </tr>
               ))}
-
-              {pageData.length === 0 && (
-                <tr>
-                  <td colSpan="5" className="text-center text-muted py-4">
-                    No records found
-                  </td>
-                </tr>
-              )}
             </tbody>
           </table>
         </div>
 
-        {/* Pagination controls */}
+        {/* Pagination */}
         <div className="d-flex flex-column flex-md-row align-items-center justify-content-between gap-2 mt-3">
-          <div>
-            <Form.Select
-              aria-label="Items per page"
-              value={itemsPerPage}
-              onChange={(e) => {
-                setItemsPerPage(Number(e.target.value));
-                setCurrentPage(1);
-              }}
-              style={{ width: "120px" }}
-            >
-              <option value={5}>5 / page</option>
-              <option value={10}>10 / page</option>
-              <option value={20}>20 / page</option>
-              <option value={50}>50 / page</option>
-            </Form.Select>
-          </div>
+          <Form.Select
+            value={itemsPerPage}
+            onChange={(e) => {
+              setItemsPerPage(Number(e.target.value));
+              setCurrentPage(1);
+            }}
+            style={{ width: 120 }}
+          >
+            <option value={5}>5 / page</option>
+            <option value={10}>10 / page</option>
+            <option value={20}>20 / page</option>
+            <option value={50}>50 / page</option>
+            <option value={100}>100 / page</option>
+          </Form.Select>
 
           <nav aria-label="Page navigation" className="mx-auto">
             <ul className="pagination mb-0">
               <li
                 className={`page-item ${currentPage === 1 ? "disabled" : ""}`}
               >
-                <button
-                  className="page-link"
-                  onClick={() => setCurrentPage(1)}
-                  aria-label="First"
-                >
+                <button className="page-link" onClick={() => setCurrentPage(1)}>
                   «
                 </button>
               </li>
@@ -593,7 +546,6 @@ export default function IncomeManagement() {
                 <button
                   className="page-link"
                   onClick={() => setCurrentPage(totalPages)}
-                  aria-label="Last"
                 >
                   »
                 </button>
@@ -618,7 +570,7 @@ export default function IncomeManagement() {
         </div>
       </div>
 
-      {/* Add/Edit Modal */}
+      {/* Modal */}
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>
         <form onSubmit={saveForm}>
           <Modal.Header closeButton>
@@ -660,7 +612,6 @@ export default function IncomeManagement() {
                   }
                 />
               </Col>
-
               <Col xs={12}>
                 <Form.Label>Buy Date</Form.Label>
                 <Form.Control

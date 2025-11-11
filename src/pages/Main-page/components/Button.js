@@ -54,6 +54,15 @@ export default function Log() {
             minWidth: "90px",
             fontSize: "14px",
             whiteSpace: "nowrap",
+            transition: "all 0.3s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.boxShadow = "0 6px 16px rgba(0,0,0,0.2)";
+            e.currentTarget.style.transform = "translateY(-5px)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.boxShadow = "0 2px 8px #0000000f";
+            e.currentTarget.style.transform = "translateY(0)";
           }}
         >
           <span className="me-1">Sign Up</span>
@@ -73,6 +82,15 @@ export default function Log() {
                 minWidth: "90px",
                 fontSize: "14px",
                 whiteSpace: "nowrap",
+                transition: "all 0.3s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.boxShadow = "0 6px 16px rgba(0,0,0,0.2)";
+                e.currentTarget.style.transform = "translateY(-5px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.boxShadow = "0 2px 8px #0000000f";
+                e.currentTarget.style.transform = "translateY(0)";
               }}
             >
               <IoSpeedometerOutline size={18} className="me-1" /> Admin
@@ -86,7 +104,16 @@ export default function Log() {
               padding: "6px 10px",
               minWidth: "90px",
               fontSize: "14px",
-              whiteSpace: "nowrap",
+              // whiteSpace: "nowrap",
+              transition: "all 0.3s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.boxShadow = "0 6px 16px rgba(0,0,0,0.2)";
+              e.currentTarget.style.transform = "translateY(-5px)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.boxShadow = "0 2px 8px #0000000f";
+              e.currentTarget.style.transform = "translateY(0)";
             }}
           >
             <IoMdLogOut size={18} className="me-1" /> Logout

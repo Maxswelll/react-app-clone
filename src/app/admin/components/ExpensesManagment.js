@@ -1,4 +1,3 @@
-// ExpenseManagement.jsx
 "use client";
 import React, { useState, useEffect } from "react";
 import {
@@ -22,8 +21,8 @@ import {
   BsArrowDown,
 } from "react-icons/bs";
 import ExpenseStatCards from "./ExpensesCard";
+import ExpenseDropdown from "./ExpensesSelect";
 
-// ---- use correct API base for ExpensesServer ----
 const API_BASE =
   process.env.NEXT_PUBLIC_EXPENSES_API || "http://localhost:5000";
 
@@ -35,6 +34,12 @@ export default function ExpenseManagement() {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [totals, setTotals] = useState({
+    total: 0,
+    product_total: 0,
+    boost_total: 0,
+    others_total: 0,
+  });
 
   const [newExpense, setNewExpense] = useState({
     type: "boost page",
@@ -43,27 +48,37 @@ export default function ExpenseManagement() {
     date: "",
   });
 
-  // sorting & pagination
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 6;
 
-  // ✅ normalize rows (simplified, no timezone shift)
   const normalize = (row) => ({
     ...row,
     price: row.price != null ? String(row.price) : "",
-    date: row.date || "", // already in YYYY-MM-DD from backend
+    date: row.date || "",
   });
 
-  // Fetch expenses
+  // Fetch expenses with filters, pagination, sorting
   const fetchExpenses = async () => {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${API_BASE}/expenses`);
+      const params = new URLSearchParams();
+      params.append("page", currentPage);
+      params.append("limit", itemsPerPage);
+      if (filterType && filterType !== "All") params.append("type", filterType);
+      if (filterDate) params.append("date", filterDate);
+      if (sortConfig.key) {
+        params.append("sortBy", sortConfig.key);
+        params.append("sortDir", sortConfig.direction);
+      }
+
+      const res = await fetch(`${API_BASE}/expenses?${params.toString()}`);
       if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
       const data = await res.json();
-      setExpenses(data.map(normalize));
+      setExpenses(data.data.map(normalize));
+      setTotalPages(data.pagination.totalPages);
     } catch (err) {
       console.error(err);
       setError("Failed to load expenses");
@@ -72,32 +87,41 @@ export default function ExpenseManagement() {
     }
   };
 
+  // Fetch totals
+  const fetchTotals = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/expenses/totals`);
+      if (!res.ok) throw new Error("Failed to fetch totals");
+      const data = await res.json();
+      setTotals(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterType, filterDate]);
+
   useEffect(() => {
     fetchExpenses();
-  }, []);
+    fetchTotals();
+  }, [currentPage, filterType, filterDate, sortConfig]);
 
-  // ✅ Add expense
   const handleAddExpense = async (ev) => {
     ev.preventDefault();
     if (!newExpense.price || !newExpense.description || !newExpense.date)
       return;
 
     try {
-      const payload = {
-        type: newExpense.type,
-        price: parseFloat(newExpense.price),
-        description: newExpense.description,
-        date: newExpense.date, // plain YYYY-MM-DD
-      };
-
+      const payload = { ...newExpense, price: parseFloat(newExpense.price) };
       const res = await fetch(`${API_BASE}/expenses`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error("Add failed");
-      const saved = await res.json();
-      setExpenses((prev) => [...prev, normalize(saved)]);
       setShowModal(false);
       setNewExpense({
         type: "boost page",
@@ -105,48 +129,40 @@ export default function ExpenseManagement() {
         description: "",
         date: "",
       });
+      fetchExpenses();
+      fetchTotals();
     } catch (err) {
       console.error("Add error:", err);
       setError("Failed to add expense");
     }
   };
 
-  // ✅ Prepare edit
-  const openEdit = (e) => {
-    setEditingExpense({ ...e, price: e.price != null ? String(e.price) : "" });
-  };
+  const openEdit = (expense) =>
+    setEditingExpense({ ...expense, price: String(expense.price) });
 
-  // ✅ Save edit
   const handleSaveEdit = async (ev) => {
     ev.preventDefault();
     if (!editingExpense) return;
-
     try {
       const payload = {
-        type: editingExpense.type,
+        ...editingExpense,
         price: parseFloat(editingExpense.price),
-        description: editingExpense.description,
-        date: editingExpense.date, // plain YYYY-MM-DD
       };
-
       const res = await fetch(`${API_BASE}/expenses/${editingExpense.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error("Update failed");
-      const saved = await res.json();
-      setExpenses((prev) =>
-        prev.map((p) => (p.id === saved.id ? normalize(saved) : p))
-      );
       setEditingExpense(null);
+      fetchExpenses();
+      fetchTotals();
     } catch (err) {
-      console.error("Update error:", err);
+      console.error(err);
       setError("Failed to update expense");
     }
   };
 
-  // ✅ Delete
   const handleDelete = async (id) => {
     if (!confirm("Delete this expense?")) return;
     try {
@@ -154,73 +170,22 @@ export default function ExpenseManagement() {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Delete failed");
-      setExpenses((prev) => prev.filter((e) => e.id !== id));
+      fetchExpenses();
+      fetchTotals();
     } catch (err) {
-      console.error("Delete error:", err);
+      console.error(err);
       setError("Failed to delete expense");
     }
   };
 
-  // Sorting handler
-  const handleSort = (key) => {
+  const handleSort = (key) =>
     setSortConfig((prev) => ({
       key,
       direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
     }));
-  };
-
-  // Filter + sort pipeline
-  const filteredAndSorted = expenses
-    .filter((e) => (filterType === "All" ? true : e.type === filterType))
-    .filter((e) => (!filterDate ? true : e.date === filterDate))
-    .slice() // clone before sort
-    .sort((a, b) => {
-      if (!sortConfig.key) return 0;
-      let aVal = a[sortConfig.key];
-      let bVal = b[sortConfig.key];
-      if (sortConfig.key === "date") {
-        aVal = new Date(aVal);
-        bVal = new Date(bVal);
-      } else if (sortConfig.key === "price") {
-        aVal = parseFloat(aVal) || 0;
-        bVal = parseFloat(bVal) || 0;
-      }
-      if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
-      if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
-      return 0;
-    });
-
-  // Pagination
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredAndSorted.length / itemsPerPage)
-  );
-  const indexOfLast = currentPage * itemsPerPage;
-  const indexOfFirst = indexOfLast - itemsPerPage;
-  const currentExpenses = filteredAndSorted.slice(indexOfFirst, indexOfLast);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [filterType, filterDate, sortConfig.key, sortConfig.direction]);
-
-  useEffect(() => {
-    if (currentPage > totalPages) setCurrentPage(totalPages || 1);
-  }, [totalPages, currentPage]);
-
-  // Totals
-  const total = expenses.reduce((t, e) => t + (parseFloat(e.price) || 0), 0);
-  const productTotal = expenses
-    .filter((e) => e.type === "product purchase")
-    .reduce((t, e) => t + (parseFloat(e.price) || 0), 0);
-  const boostTotal = expenses
-    .filter((e) => e.type === "boost page")
-    .reduce((t, e) => t + (parseFloat(e.price) || 0), 0);
-  const othersTotal = expenses
-    .filter((e) => e.type === "other")
-    .reduce((t, e) => t + (parseFloat(e.price) || 0), 0);
 
   const getTypeVariant = (type) => {
-    switch (type) {
+    switch (type.toLowerCase()) {
       case "boost page":
         return {
           style: {
@@ -277,7 +242,7 @@ export default function ExpenseManagement() {
       id: "total",
       icon: <BsCurrencyDollar size={28} />,
       color: "linear-gradient(135deg, #f857a6, #ff5858)",
-      value: `$${total.toFixed(2)}`,
+      value: `$${Number(totals.total || 0).toFixed(2)}`,
       label: "Total Expenses",
       popup: "All expenses recorded in the system",
     },
@@ -285,7 +250,7 @@ export default function ExpenseManagement() {
       id: "product",
       icon: <BsBag size={28} />,
       color: "linear-gradient(135deg, #667eea, #764ba2)",
-      value: `$${productTotal.toFixed(2)}`,
+      value: `$${Number(totals.product_total || 0).toFixed(2)}`,
       label: "Product Purchases",
       popup: "Expenses spent on buying products",
     },
@@ -293,7 +258,7 @@ export default function ExpenseManagement() {
       id: "boost",
       icon: <BsGraphUp size={28} />,
       color: "linear-gradient(135deg, #56ab2f, #a8e063)",
-      value: `$${boostTotal.toFixed(2)}`,
+      value: `$${Number(totals.boost_total || 0).toFixed(2)}`,
       label: "Boost Pages",
       popup: "Expenses spent on ads/boosts",
     },
@@ -301,7 +266,7 @@ export default function ExpenseManagement() {
       id: "others",
       icon: <BsPeople size={28} />,
       color: "linear-gradient(135deg, #f46b45, #eea849)",
-      value: `$${othersTotal.toFixed(2)}`,
+      value: `$${Number(totals.others_total || 0).toFixed(2)}`,
       label: "Others Expenses",
       popup: "Other miscellaneous expenses",
     },
@@ -334,17 +299,15 @@ export default function ExpenseManagement() {
       <ExpenseStatCards cards={cards} />
 
       {/* FILTERS */}
-      <Row className="mb-3 align-items-center">
+      <Row className="bg-white rounded-3 shadow-sm p-3 mb-3 d-flex justify-content-start">
         <Col xs={12} md={3}>
-          <Form.Select
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-          >
-            <option value="All">All Types</option>
-            <option value="boost page">Boost Page</option>
-            <option value="product purchase">Product Purchase</option>
-            <option value="other">Others</option>
-          </Form.Select>
+          <ExpenseDropdown
+            value={filterType || "All Types"}
+            onChange={(value) =>
+              setFilterType(value === "All Types" ? "All" : value.toLowerCase())
+            }
+            options={["All Types", "Boost Page", "Product Purchase", "Other"]}
+          />
         </Col>
         <Col xs={12} md={3}>
           <Form.Control
@@ -359,13 +322,29 @@ export default function ExpenseManagement() {
           />
         </Col>
         <Col xs={12} md="auto" className="text-md-start text-center">
-          <motion.div whileHover={{ scale: 1.05 }}>
+          <motion.div
+            whileHover={{
+              scale: 1.08,
+              boxShadow: "0 6px 20px rgba(255, 130, 180, 0.4)",
+              borderRadius: "16px",
+            }}
+            whileTap={{ scale: 0.95 }}
+            style={{ display: "inline-block" }}
+          >
             <Button
-              style={{
-                background: "linear-gradient(to right, #f77fbe, #e84a87)",
-                border: "none",
-              }}
               onClick={() => setShowModal(true)}
+              style={{
+                background: "linear-gradient(135deg, #f77fbe, #e84a87)",
+                border: "none",
+                borderRadius: "16px",
+                padding: "0.6rem 1.5rem",
+                fontWeight: 600,
+                fontSize: "0.95rem",
+                color: "#fff",
+                letterSpacing: "0.5px",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                transition: "all 0.3s ease",
+              }}
             >
               + Add Expense
             </Button>
@@ -417,7 +396,7 @@ export default function ExpenseManagement() {
             </tr>
           </thead>
           <tbody>
-            {currentExpenses.map((e) => (
+            {expenses.map((e) => (
               <motion.tr
                 key={e.id}
                 initial={{ x: -30, opacity: 0 }}
@@ -456,7 +435,7 @@ export default function ExpenseManagement() {
               </motion.tr>
             ))}
 
-            {currentExpenses.length === 0 && (
+            {expenses.length === 0 && (
               <tr>
                 <td colSpan="5" className="text-center text-muted">
                   No expenses found
@@ -468,7 +447,7 @@ export default function ExpenseManagement() {
       </div>
 
       {/* PAGINATION */}
-      {filteredAndSorted.length > itemsPerPage && (
+      {totalPages > 1 && (
         <Row className="mt-3">
           <Col className="d-flex justify-content-center">
             <Pagination>

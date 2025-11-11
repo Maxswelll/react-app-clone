@@ -4,52 +4,84 @@ import StatCards from "./StockCard";
 import ProductToolbar from "./StockSelection";
 import ProductTable from "./StockProductTable";
 import Pagination from "./StockPagination";
-import productsData from "./items";
 
-export default function StockManagment() {
-  const [products, setProducts] = useState(productsData);
+export default function StockManagement() {
+  const [products, setProducts] = useState([]);
   const [filterType, setFilterType] = useState("All");
   const [filterStatus, setFilterStatus] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
   const [editingProduct, setEditingProduct] = useState(null);
+
+  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(false);
 
-  // ✅ Fetch products from backend
-  const fetchProducts = async () => {
+  // ✅ Fetch products from backend (normal pagination endpoint)
+  const fetchProducts = async (
+    page = 1,
+    limit = itemsPerPage,
+    type = filterType,
+    status = filterStatus,
+    search = searchTerm
+  ) => {
+    setLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/items");
+      const queryParams = new URLSearchParams();
+      queryParams.append("page", page.toString());
+      queryParams.append("limit", limit.toString());
+      if (type && type !== "All") queryParams.append("type", type);
+      if (status && status !== "All") queryParams.append("status", status);
+      if (search && search.trim() !== "")
+        queryParams.append("search", search.trim());
 
-      if (!res.ok) throw new Error("Backend not available");
-      const data = await res.json();
-      setProducts(data.length > 0 ? data : productsData);
+      // ✅ Use /items/paginated for StockManagement
+      const res = await fetch(
+        `http://localhost:5000/items/paginated?${queryParams}`
+      );
+      const result = await res.json();
+
+      if (result.data && result.pagination) {
+        setProducts(result.data); // only current page
+        setTotalPages(result.pagination.totalPages || 1);
+        setCurrentPage(result.pagination.page || 1);
+      } else {
+        setProducts([]);
+        setTotalPages(1);
+      }
     } catch (err) {
-      console.warn("⚠️ Backend not available, using items.js fallback");
-      setProducts(productsData);
+      console.error("Error fetching products:", err);
+      setProducts([]);
+      setTotalPages(1);
+    } finally {
+      setLoading(false);
     }
   };
 
+  // ✅ Refetch whenever page, filters, search, or itemsPerPage change
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    fetchProducts(
+      currentPage,
+      itemsPerPage,
+      filterType,
+      filterStatus,
+      searchTerm
+    );
+  }, [currentPage, itemsPerPage, filterType, filterStatus, searchTerm]);
 
   // ✅ Add product
-  const addProduct = (newItem) => {
-    setProducts((prev) => [...prev, newItem]);
-  };
+  const addProduct = async () => fetchProducts(1);
 
   // ✅ Edit product
   const editProduct = async (updated) => {
     try {
       const res = await fetch(`http://localhost:5000/items/${updated.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        method: "PATCH",
         body: JSON.stringify(updated),
+        headers: { "Content-Type": "application/json" },
       });
-      if (res.ok) {
-        fetchProducts();
-        setEditingProduct(null);
-      }
+      if (res.ok) fetchProducts(currentPage);
     } catch (err) {
       console.error("Error editing product:", err);
     }
@@ -61,69 +93,52 @@ export default function StockManagment() {
       const res = await fetch(`http://localhost:5000/items/${id}`, {
         method: "DELETE",
       });
-      if (res.ok) fetchProducts();
+      if (res.ok) {
+        if (products.length === 1 && currentPage > 1)
+          setCurrentPage(currentPage - 1);
+        else fetchProducts(currentPage);
+      }
     } catch (err) {
       console.error("Error deleting product:", err);
     }
   };
 
-  // ✅ Filtering
-  const filteredProducts = products.filter((p) => {
-    const typeMatch =
-      filterType === "All" ||
-      p.type?.toLowerCase() === filterType.toLowerCase();
-
-    const statusMatch =
-      filterStatus === "All" ||
-      (filterStatus === "In Stock" && Number(p.stock) > 0) ||
-      (filterStatus === "Out of Stock" && Number(p.stock) === 0);
-
-    const searchMatch =
-      p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.type?.toLowerCase().includes(searchTerm.toLowerCase());
-
-    return typeMatch && statusMatch && searchMatch;
-  });
-
-  // ✅ Pagination
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentProducts = filteredProducts.slice(
-    startIndex,
-    startIndex + itemsPerPage
-  );
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
-
   return (
     <>
-      {/* 🔥 Cards now show counts based on current page only */}
-      <StatCards products={currentProducts} />
+      <StatCards products={products} />
 
       <ProductToolbar
         onAddProduct={addProduct}
         onEditProduct={editProduct}
         editingProduct={editingProduct}
         setEditingProduct={setEditingProduct}
-        refreshProducts={fetchProducts}
+        refreshProducts={() => fetchProducts(1)}
         filterType={filterType}
         setFilterType={setFilterType}
         filterStatus={filterStatus}
         setFilterStatus={setFilterStatus}
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
         setCurrentPage={setCurrentPage}
       />
-      <ProductTable
-        products={currentProducts}
-        onDelete={deleteProduct}
-        setEditingProduct={setEditingProduct}
-      />
+
+      {loading ? (
+        <p>Loading...</p>
+      ) : (
+        <ProductTable
+          products={products}
+          onDelete={deleteProduct}
+          setEditingProduct={setEditingProduct}
+        />
+      )}
 
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
-        itemsPerPage={itemsPerPage}
         setCurrentPage={setCurrentPage}
-        setItemsPerPage={setItemsPerPage}
+        itemsPerPage={itemsPerPage}
+        setItemsPerPage={(limit) => {
+          setItemsPerPage(limit);
+          setCurrentPage(1); // reset to first page
+        }}
       />
     </>
   );

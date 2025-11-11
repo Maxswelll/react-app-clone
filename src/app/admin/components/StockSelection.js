@@ -1,13 +1,22 @@
 "use client";
 import { useState, useEffect } from "react";
+import AnimatedSelect from "./AnimatedSelect";
 
 export default function ProductToolbar({
   onAddProduct,
   onEditProduct,
   editingProduct,
   setEditingProduct,
+  filterStatus,
+  setFilterStatus,
+  filterType,
+  setFilterType,
+  setCurrentPage,
+  refreshProducts, // passed from StockManagement
 }) {
   const [showForm, setShowForm] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+
   const [formData, setFormData] = useState({
     name: "",
     type: "dress",
@@ -20,7 +29,7 @@ export default function ProductToolbar({
     image: null,
   });
 
-  // ✅ Prefill form when editing
+  // Prefill when editing
   useEffect(() => {
     if (editingProduct) {
       const cleanSizes = (() => {
@@ -30,10 +39,7 @@ export default function ProductToolbar({
             .map((s) => s.replace(/['"]+/g, ""))
             .join(",");
         }
-        return editingProduct.sizes
-          .replace(/[{}]/g, "")
-          .replace(/['"]+/g, "")
-          .trim();
+        return editingProduct.sizes.replace(/[{}"']/g, "").trim();
       })();
 
       setFormData({
@@ -47,47 +53,44 @@ export default function ProductToolbar({
         status: editingProduct.status || "In Stock",
         image: null,
       });
+
       setShowForm(true);
     }
   }, [editingProduct]);
 
-  // ✅ Calculate discount percentage
   const calculateDiscount = (buy, sell) => {
     const buyPrice = parseFloat(buy);
     const sellPrice = parseFloat(sell);
     if (buyPrice > 0 && sellPrice > 0 && sellPrice < buyPrice) {
-      const discountPercent = ((1 - sellPrice / buyPrice) * 100).toFixed(1);
-      return discountPercent;
+      return ((1 - sellPrice / buyPrice) * 100).toFixed(1);
     }
     return "";
   };
 
-  // ✅ Handle input changes
   const handleChange = (e) => {
     const { name, value, files } = e.target;
-    let updatedValue = value;
 
     if (name === "sizes") {
-      updatedValue = value.replace(/[^0-9,]/g, "");
+      return setFormData((prev) => ({
+        ...prev,
+        sizes: value.replace(/[^0-9,]/g, ""),
+      }));
     }
 
     if (name === "stock") {
       const stockQty = parseInt(value, 10);
-      setFormData((prev) => ({
+      return setFormData((prev) => ({
         ...prev,
         stock: value,
         status: stockQty > 0 ? "In Stock" : "Out of Stock",
       }));
-      return;
     }
 
-    // ✅ Auto calculate discount when changing prices
     setFormData((prev) => {
       const newData = {
         ...prev,
-        [name]: files && files.length > 0 ? files[0] : updatedValue,
+        [name]: files && files.length > 0 ? files[0] : value,
       };
-
       if (
         (name === "buy_price" && prev.sell_price) ||
         (name === "sell_price" && prev.buy_price)
@@ -97,18 +100,15 @@ export default function ProductToolbar({
           name === "sell_price" ? value : prev.sell_price
         );
       }
-
       return newData;
     });
   };
 
-  // ✅ Submit form
+  // Submit form
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
       const formDataToSend = new FormData();
-
       formDataToSend.append("name", formData.name);
       formDataToSend.append("type", formData.type);
       formDataToSend.append("buy_price", formData.buy_price);
@@ -116,25 +116,24 @@ export default function ProductToolbar({
       formDataToSend.append("discount", formData.discount);
       formDataToSend.append("stock", formData.stock);
 
-      // ✅ Clean and format sizes before sending
       const cleanedSizes = formData.sizes
         .split(",")
         .map((s) => s.replace(/['"\s]/g, "").trim())
         .filter((s) => s !== "")
         .join(",");
       formDataToSend.append("sizes", `{${cleanedSizes}}`);
-
       formDataToSend.append("status", formData.status);
+
       if (formData.image) formDataToSend.append("image", formData.image);
 
       let res;
       if (editingProduct) {
-        res = await fetch(`http://localhost:5001/items/${editingProduct.id}`, {
-          method: "PUT",
+        res = await fetch(`http://localhost:5000/items/${editingProduct.id}`, {
+          method: "PATCH",
           body: formDataToSend,
         });
       } else {
-        res = await fetch("http://localhost:5001/items", {
+        res = await fetch("http://localhost:5000/items", {
           method: "POST",
           body: formDataToSend,
         });
@@ -146,7 +145,9 @@ export default function ProductToolbar({
       if (editingProduct) onEditProduct(savedProduct);
       else onAddProduct(savedProduct);
 
-      // ✅ Reset form
+      // Refresh list with current filters and page
+      refreshProducts();
+
       setFormData({
         name: "",
         type: "dress",
@@ -161,14 +162,34 @@ export default function ProductToolbar({
       setShowForm(false);
       setEditingProduct(null);
     } catch (err) {
-      console.error("Save error:", err);
-      alert("Failed to save product. Check console.");
+      alert("❌ Failed to save product.");
+      console.error(err);
     }
+  };
+
+  // ✅ When filters/search change, reset page to 1 and refresh backend
+  const handleFilterChange = (type, value) => {
+    setCurrentPage(1);
+    if (type === "status") setFilterStatus(value);
+    if (type === "type") setFilterType(value);
+    refreshProducts(
+      1,
+      value === "status" ? value : undefined,
+      value === "type" ? value : undefined,
+      searchTerm
+    );
+  };
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    setCurrentPage(1);
+    refreshProducts(1, filterStatus, filterType, value);
   };
 
   return (
     <div className="container mt-4">
-      {/* Toolbar */}
+      {/* Filters + Search */}
       <div
         className="d-flex align-items-center gap-3 p-3 mb-4"
         style={{
@@ -177,25 +198,25 @@ export default function ProductToolbar({
           boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
         }}
       >
-        <select
-          className="form-select border-0 shadow-sm"
-          style={{ maxWidth: "200px" }}
-        >
-          <option>All Products</option>
-          <option>In Stock</option>
-          <option>Out of Stock</option>
-        </select>
+        <AnimatedSelect
+          value={filterStatus}
+          onChange={(v) => handleFilterChange("status", v)}
+          options={["All", "In Stock", "Out of Stock"]}
+        />
 
-        <select
-          className="form-select border-0 shadow-sm"
-          style={{ maxWidth: "200px" }}
-        >
-          <option>All Types</option>
-          <option value="dress">Dress</option>
-          <option value="shirt">Shirt</option>
-          <option value="pants">Pants</option>
-          <option value="shoes">Shoes</option>
-        </select>
+        <AnimatedSelect
+          value={filterType}
+          onChange={(v) => handleFilterChange("type", v)}
+          options={["All", "dress", "shirt", "pants", "shoes"]}
+        />
+
+        <input
+          type="text"
+          placeholder="Search by name..."
+          className="form-control w-auto"
+          value={searchTerm}
+          onChange={handleSearchChange}
+        />
 
         <button
           onClick={() => setShowForm(true)}
@@ -212,7 +233,7 @@ export default function ProductToolbar({
         </button>
       </div>
 
-      {/* Modal */}
+      {/* Add/Edit Modal */}
       {showForm && (
         <div
           className="modal d-block"
@@ -236,7 +257,6 @@ export default function ProductToolbar({
                 </div>
 
                 <div className="modal-body">
-                  {/* Inputs */}
                   <input
                     type="text"
                     name="name"
@@ -246,7 +266,6 @@ export default function ProductToolbar({
                     className="form-control mb-2"
                     required
                   />
-
                   <input
                     type="number"
                     name="buy_price"
@@ -256,7 +275,6 @@ export default function ProductToolbar({
                     className="form-control mb-2"
                     required
                   />
-
                   <input
                     type="number"
                     name="sell_price"
@@ -267,7 +285,6 @@ export default function ProductToolbar({
                     required
                   />
 
-                  {/* ✅ Show % OFF */}
                   {formData.discount && (
                     <div className="alert alert-success py-2 text-center fw-bold">
                       {formData.discount}% OFF
@@ -279,11 +296,10 @@ export default function ProductToolbar({
                     name="sizes"
                     value={formData.sizes}
                     onChange={handleChange}
-                    placeholder="Sizes (e.g. 66,73,80,90,100)"
+                    placeholder="Sizes (e.g. 66,73,80)"
                     className="form-control mb-2"
                     required
                   />
-
                   <input
                     type="number"
                     name="stock"
@@ -328,14 +344,6 @@ export default function ProductToolbar({
                     <img
                       src={URL.createObjectURL(formData.image)}
                       alt="preview"
-                      style={{ width: "100px", marginTop: "10px" }}
-                    />
-                  )}
-
-                  {editingProduct?.image && !formData.image && (
-                    <img
-                      src={`http://localhost:5000${editingProduct.image}`}
-                      alt="current"
                       style={{ width: "100px", marginTop: "10px" }}
                     />
                   )}
